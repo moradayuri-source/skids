@@ -4,6 +4,7 @@ import BudgetReport from '../models/BudgetReport.js';
 import Document from '../models/Document.js';
 import Event from '../models/Event.js';
 import Message from '../models/Message.js';
+import YouthProfile from '../models/YouthProfile.js';
 import { logActivity } from '../utils/activityLogger.js';
 import asyncHandler from '../utils/asyncHandler.js';
 import { requireAuth } from '../middleware/auth.js';
@@ -22,6 +23,10 @@ const budgetResponse = (report) => ({
   category: report.category,
   status: report.status,
   date: report.reportDate.toISOString().slice(0, 10),
+  fileUrl: report.cloudinary?.secureUrl || report.fileUrl,
+  fileKey: report.cloudinary?.publicId || report.fileKey,
+  fileSize: report.fileSize || report.cloudinary?.bytes || 0,
+  cloudinary: report.cloudinary || {},
 });
 
 const documentResponse = (document) => ({
@@ -123,11 +128,29 @@ router.put(
       age: req.body.age ?? req.user.profile?.age,
       gender: req.body.gender ?? req.user.profile?.gender,
       contact: req.body.contact ?? req.user.profile?.contact,
+      address: req.body.address ?? req.user.profile?.address,
       civilStatus: req.body.civilStatus ?? req.user.profile?.civilStatus,
       voterStatus: req.body.voterStatus ?? req.user.profile?.voterStatus,
       workStatus: req.body.workStatus ?? req.user.profile?.workStatus,
     };
     await req.user.save();
+
+    await YouthProfile.findOneAndUpdate(
+      { user: req.user._id },
+      {
+        name: req.user.name,
+        email: req.user.email,
+        age: req.user.profile?.age,
+        barangay: req.user.barangay,
+        contact: req.user.profile?.contact,
+        gender: req.user.profile?.gender,
+        civilStatus: req.user.profile?.civilStatus,
+        voterStatus: req.user.profile?.voterStatus,
+        workStatus: req.user.profile?.workStatus,
+        updatedBy: req.user._id,
+      },
+      { upsert: true, runValidators: true }
+    );
 
     await logActivity({
       req,

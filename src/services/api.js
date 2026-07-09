@@ -91,6 +91,12 @@ export const api = {
 
   // Admin endpoints
   admin: {
+    managers: {
+      list: () => apiClient.get('/admin/managers'),
+      add: (data) => apiClient.post('/admin/managers', data),
+      remove: (id) => apiClient.delete(`/admin/managers/${id}`),
+    },
+
     // Youth management
     getYouth: () => apiClient.get('/admin/youth'),
     addYouth: (data) => apiClient.post('/admin/youth', data),

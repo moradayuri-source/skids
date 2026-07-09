@@ -26,7 +26,7 @@ const OfficerLogin = () => {
     try {
       const result = await login({ email, password });
       const role = result.user?.role || result.role || 'admin';
-      navigate(role === 'admin' ? '/admin' : '/user', { replace: true });
+      navigate(['admin', 'manager'].includes(role) ? '/admin' : '/user', { replace: true });
     } catch (authError) {
       setError(authError?.response?.data?.message || authError.message || 'Login failed. Please check your credentials.');
     } finally {

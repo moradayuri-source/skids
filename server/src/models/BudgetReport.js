@@ -38,6 +38,31 @@ const budgetReportSchema = new mongoose.Schema(
       trim: true,
       default: '',
     },
+    fileUrl: {
+      type: String,
+      trim: true,
+      default: '',
+    },
+    fileKey: {
+      type: String,
+      trim: true,
+      default: '',
+    },
+    fileSize: {
+      type: Number,
+      min: 0,
+      default: 0,
+    },
+    cloudinary: {
+      publicId: { type: String, trim: true, default: '' },
+      secureUrl: { type: String, trim: true, default: '' },
+      resourceType: { type: String, trim: true, default: '' },
+      format: { type: String, trim: true, default: '' },
+      width: Number,
+      height: Number,
+      bytes: { type: Number, default: 0 },
+      originalFilename: { type: String, trim: true, default: '' },
+    },
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',

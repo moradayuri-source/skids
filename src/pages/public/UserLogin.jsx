@@ -44,7 +44,7 @@ const UserLogin = () => {
     try {
       const result = await login({ email, password, remember: rememberMe });
       const role = result.user?.role || result.role || 'user';
-      navigate(role === 'admin' ? '/admin' : '/user', { replace: true });
+      navigate(['admin', 'manager'].includes(role) ? '/admin' : '/user', { replace: true });
     } catch (authError) {
       setError(authError?.response?.data?.message || authError.message || 'Login failed. Please check your credentials.');
     } finally {

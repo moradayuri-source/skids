@@ -102,7 +102,7 @@ export const AuthProvider = ({ children }) => {
   const updateProfile = useCallback(
     async (data) => {
       const response =
-        user?.role === 'admin'
+        ['admin', 'manager'].includes(user?.role)
           ? await api.admin.updateProfile(data)
           : await api.user.updateProfile(data);
       const updatedUser = response.data.user || response.data;
@@ -127,7 +127,8 @@ export const AuthProvider = ({ children }) => {
       updateProfile,
       changePassword,
       updateUser: setUser,
-      isAdmin: user?.role === 'admin',
+      isAdmin: ['admin', 'manager'].includes(user?.role),
+      isChairperson: user?.role === 'admin',
       isYouth: user?.role === 'user',
       isAuthenticated: Boolean(user),
     }),

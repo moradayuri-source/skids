@@ -241,8 +241,11 @@ router.post(
       $or: [{ googleId: payload.sub }, { email }],
     }).select('+passwordHash');
 
-    const role =
-      existingUser?.role === 'admin' || adminEmails.has(email) ? 'admin' : 'user';
+    const role = adminEmails.has(email)
+      ? 'admin'
+      : existingUser?.role === 'manager'
+        ? 'manager'
+        : 'user';
 
     const user = await User.findOneAndUpdate(
       { $or: [{ googleId: payload.sub }, { email }] },

@@ -8,10 +8,13 @@ import {
   IoDocumentTextOutline,
   IoChatbubbleOutline,
   IoTimeOutline,
-  IoPersonOutline
+  IoPersonOutline,
+  IoShieldCheckmarkOutline
 } from 'react-icons/io5';
+import useAuth from '../../hooks/useAuth';
 
 const Sidebar = ({ isOpen, onClose, role = 'admin' }) => {
+  const { user } = useAuth();
   const adminMenuItems = [
     { path: '/admin', icon: IoHomeOutline, label: 'Dashboard' },
     { path: '/admin/youth', icon: IoPeopleOutline, label: 'Youth Management' },
@@ -21,6 +24,9 @@ const Sidebar = ({ isOpen, onClose, role = 'admin' }) => {
     { path: '/admin/documents', icon: IoDocumentTextOutline, label: 'Documents' },
     { path: '/admin/messages', icon: IoChatbubbleOutline, label: 'Messages' },
     { path: '/admin/history', icon: IoTimeOutline, label: 'Activity Logs' },
+    ...(user?.role === 'admin'
+      ? [{ path: '/admin/managers', icon: IoShieldCheckmarkOutline, label: 'Manager Accounts' }]
+      : []),
     { path: '/admin/profile', icon: IoPersonOutline, label: 'Profile' },
   ];
 

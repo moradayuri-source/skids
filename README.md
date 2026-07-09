@@ -27,7 +27,7 @@ MONGODB_URI=mongodb+srv://USER:PASSWORD@CLUSTER.mongodb.net/skids
 JWT_SECRET=replace-with-a-long-random-secret
 JWT_EXPIRES_IN=7d
 GOOGLE_CLIENT_ID=YOUR_WEB_CLIENT_ID.apps.googleusercontent.com
-ADMIN_EMAILS=officer@example.com
+ADMIN_EMAILS=chairperson@example.com
 CLOUDINARY_CLOUD_NAME=...
 CLOUDINARY_API_KEY=...
 CLOUDINARY_API_SECRET=...
@@ -55,9 +55,13 @@ The frontend defaults to `http://localhost:5173`; the API defaults to
 ## Account and role security
 
 - Public password registration always creates a youth account.
-- Officer/admin accounts sign in with Google using an email listed in
-  `ADMIN_EMAILS`.
-- The backend verifies the Google ID token before granting the admin role.
+- The chairperson signs in with the Google email listed in `ADMIN_EMAILS` and
+  receives the `admin` role.
+- The chairperson can add or remove `manager` access from **Manager Accounts**.
+  Managers can operate all admin modules except manager administration.
+- The backend verifies the Google ID token before granting either privileged
+  role. Managers must sign in with the exact Google email assigned by the
+  chairperson.
 - Do not expose `JWT_SECRET`, `MONGODB_URI`, or `CLOUDINARY_API_SECRET` in the
   frontend.
 - Existing password-based officer accounts can still log in, but new officer
@@ -197,7 +201,7 @@ JWT_EXPIRES_IN=7d
 GOOGLE_CLIENT_ID=YOUR_WEB_CLIENT_ID.apps.googleusercontent.com
 CORS_ORIGINS=https://your-project.vercel.app
 CLIENT_URL=https://your-project.vercel.app
-ADMIN_EMAILS=chair@example.com,secretary@example.com
+ADMIN_EMAILS=chairperson@example.com
 CLOUDINARY_CLOUD_NAME=...
 CLOUDINARY_API_KEY=...
 CLOUDINARY_API_SECRET=...
@@ -260,13 +264,23 @@ Reference: https://vercel.com/docs/frameworks/frontend/vite
 3. The browser uploads the file directly to Cloudinary.
 4. The frontend stores the returned secure URL and metadata through the API.
 
+The same signed flow is used by Documents, Budget Report attachments, profile
+photos, announcements, and events. Cloudinary Free environments must enable
+**Allow delivery of PDF and ZIP files** under Product Environment Security for
+users to open or download uploaded PDFs.
+
+Users can directly download a legal-size profile information PDF from
+**My Profile > Download Personal Form**. The file uses `public/sk.jpg` in its
+header and downloads without opening the browser print dialog.
+
 ## Production verification checklist
 
 - `GET https://YOUR-SERVICE.onrender.com/api/health` returns `status: "ok"`.
 - Directly opening and refreshing a nested Vercel route does not return 404.
 - Youth password registration creates a user, never an admin.
 - Officer registration by password is rejected.
-- An email in `ADMIN_EMAILS` becomes admin after Google sign-in.
+- The email in `ADMIN_EMAILS` becomes the chairperson admin after Google sign-in.
+- The chairperson can add/remove managers; managers cannot access that control.
 - A Google account outside `ADMIN_EMAILS` becomes a youth user.
 - Profile photo and document uploads complete successfully.
 - MongoDB data remains after a Render restart or redeploy.

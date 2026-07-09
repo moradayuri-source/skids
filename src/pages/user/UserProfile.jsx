@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { IoPersonOutline, IoMailOutline, IoCallOutline, IoLocationOutline, IoCameraOutline } from 'react-icons/io5';
+import { IoPersonOutline, IoMailOutline, IoCallOutline, IoLocationOutline, IoCameraOutline, IoDownloadOutline } from 'react-icons/io5';
 import Card from '../../components/common/Card';
 import Input from '../../components/common/Input';
 import Button from '../../components/common/Button';
@@ -9,15 +9,16 @@ import { cloudinaryOptimizedUrl, uploadToCloudinary } from '../../services/uploa
 import useAuth from '../../hooks/useAuth';
 
 const mapProfile = (user) => ({
-  name: user?.name || 'Juan Dela Cruz',
+  name: user?.name || '',
   age: user?.profile?.age || '',
-  gender: user?.profile?.gender || 'Male',
+  gender: user?.profile?.gender || '',
   email: user?.email || '',
   contact: user?.profile?.contact || '',
-  barangay: user?.barangay || 'Masagui',
-  civilStatus: user?.profile?.civilStatus || 'Single',
-  voterStatus: user?.profile?.voterStatus || 'Registered',
-  workStatus: user?.profile?.workStatus || 'Student',
+  address: user?.profile?.address || '',
+  barangay: user?.barangay || '',
+  civilStatus: user?.profile?.civilStatus || '',
+  voterStatus: user?.profile?.voterStatus || '',
+  workStatus: user?.profile?.workStatus || '',
   avatar: user?.avatar || '',
   avatarPublicId: user?.avatarPublicId || '',
 });
@@ -30,6 +31,7 @@ const UserProfile = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [downloading, setDownloading] = useState(false);
   const [error, setError] = useState('');
 
   useEffect(() => {
@@ -101,6 +103,7 @@ const UserProfile = () => {
         age: profile.age,
         gender: profile.gender,
         contact: profile.contact,
+        address: profile.address,
         barangay: profile.barangay,
         civilStatus: profile.civilStatus,
         voterStatus: profile.voterStatus,
@@ -127,6 +130,19 @@ const UserProfile = () => {
     profile.avatar,
     'c_fill,w_256,h_256,g_face,f_auto,q_auto'
   );
+
+  const handleDownloadProfile = async () => {
+    setDownloading(true);
+    setError('');
+    try {
+      const { generateYouthProfilePDF } = await import('../../utils/pdfGenerator');
+      await generateYouthProfilePDF(profile);
+    } catch (downloadError) {
+      setError(downloadError.message || 'Unable to generate your personal information PDF.');
+    } finally {
+      setDownloading(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -184,9 +200,15 @@ const UserProfile = () => {
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-lg font-semibold text-gray-900">Personal Information</h3>
             {!isEditing ? (
-              <Button variant="primary" onClick={() => setIsEditing(true)}>
-                Edit Profile
-              </Button>
+              <div className="flex flex-wrap gap-2">
+                <Button variant="outline" onClick={handleDownloadProfile} disabled={downloading}>
+                  <IoDownloadOutline className="mr-2 h-4 w-4" />
+                  {downloading ? 'Generating...' : 'Download Personal Form'}
+                </Button>
+                <Button variant="primary" onClick={() => setIsEditing(true)}>
+                  Edit Profile
+                </Button>
+              </div>
             ) : (
               <div className="flex gap-3">
                 <Button variant="secondary" onClick={() => setIsEditing(false)} disabled={saving}>
@@ -219,6 +241,15 @@ const UserProfile = () => {
                 icon={IoPersonOutline}
               />
             </div>
+
+            <Input
+              label="Complete Address"
+              name="address"
+              value={profile.address}
+              onChange={handleInputChange}
+              disabled={!isEditing}
+              icon={IoLocationOutline}
+            />
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Input
@@ -257,6 +288,7 @@ const UserProfile = () => {
                   disabled={!isEditing}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 disabled:bg-gray-50"
                 >
+                  <option value="">Select gender</option>
                   <option value="Male">Male</option>
                   <option value="Female">Female</option>
                   <option value="Other">Other</option>
@@ -275,6 +307,7 @@ const UserProfile = () => {
                   disabled={!isEditing}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 disabled:bg-gray-50"
                 >
+                  <option value="">Select civil status</option>
                   <option value="Single">Single</option>
                   <option value="Married">Married</option>
                   <option value="Widowed">Widowed</option>
@@ -290,6 +323,7 @@ const UserProfile = () => {
                   disabled={!isEditing}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 disabled:bg-gray-50"
                 >
+                  <option value="">Select work status</option>
                   <option value="Student">Student</option>
                   <option value="Employed">Employed</option>
                   <option value="Unemployed">Unemployed</option>

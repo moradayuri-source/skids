@@ -27,10 +27,12 @@ const Navbar = ({
   const navigate = useNavigate();
   const currentRole = user?.role || role;
   const displayName = user?.name || userName;
-  const displayRole = user?.role === 'admin' ? 'Admin' : userRole;
-  const profilePath = currentRole === 'admin' ? '/admin/profile' : '/user/profile';
+  const isManagementRole = ['admin', 'manager'].includes(currentRole);
+  const displayRole =
+    user?.role === 'admin' ? 'Chairperson' : user?.role === 'manager' ? 'Manager' : userRole;
+  const profilePath = isManagementRole ? '/admin/profile' : '/user/profile';
   const announcementsPath =
-    currentRole === 'admin' ? '/admin/announcements' : '/user/announcements';
+    isManagementRole ? '/admin/announcements' : '/user/announcements';
 
   const handleNotifications = async () => {
     const willOpen = !isNotificationsOpen;
@@ -42,7 +44,7 @@ const Navbar = ({
     setNotificationsLoading(true);
     try {
       const response =
-        currentRole === 'admin'
+        isManagementRole
           ? await api.admin.getAnnouncements()
           : await api.user.getAnnouncements();
       setNotifications(response.data.slice(0, 5));

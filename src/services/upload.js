@@ -48,3 +48,16 @@ export const cloudinaryOptimizedUrl = (
 
   return url.replace('/upload/', `/upload/${transformation}/`);
 };
+
+export const cloudinaryAttachmentUrl = (url, filename = 'download') => {
+  if (!url || !url.includes('/upload/')) {
+    return url;
+  }
+
+  const safeFilename = String(filename)
+    .replace(/\.[^.]+$/, '')
+    .replace(/[^a-zA-Z0-9_-]+/g, '_')
+    .slice(0, 80) || 'download';
+
+  return url.replace('/upload/', `/upload/fl_attachment:${safeFilename}/`);
+};

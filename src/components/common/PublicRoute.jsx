@@ -15,7 +15,7 @@ const PublicRoute = () => {
   }
 
   if (isAuthenticated) {
-    return <Navigate to={user?.role === 'admin' ? '/admin' : '/user'} replace />;
+    return <Navigate to={['admin', 'manager'].includes(user?.role) ? '/admin' : '/user'} replace />;
   }
 
   return <Outlet />;

@@ -7,7 +7,7 @@ import Input from '../../components/common/Input';
 import Modal from '../../components/common/Modal';
 import { SkeletonTable } from '../../components/common/Skeleton';
 import { api } from '../../services/api';
-import { uploadToCloudinary } from '../../services/upload';
+import { cloudinaryAttachmentUrl, uploadToCloudinary } from '../../services/upload';
 
 const DocumentManagement = () => {
   const [documents, setDocuments] = useState([]);
@@ -60,7 +60,11 @@ const DocumentManagement = () => {
 
   const handleDownload = (document) => {
     if (document.fileUrl) {
-      window.open(document.fileUrl, '_blank', 'noopener,noreferrer');
+      window.open(
+        cloudinaryAttachmentUrl(document.fileUrl, document.title),
+        '_blank',
+        'noopener,noreferrer'
+      );
     }
   };
 

@@ -5,15 +5,16 @@ import BudgetReport from '../models/BudgetReport.js';
 import Document from '../models/Document.js';
 import Event from '../models/Event.js';
 import Message from '../models/Message.js';
+import User from '../models/User.js';
 import YouthProfile from '../models/YouthProfile.js';
 import { inferActionType, logActivity } from '../utils/activityLogger.js';
 import asyncHandler from '../utils/asyncHandler.js';
 import { authorize, requireAuth } from '../middleware/auth.js';
-import { publicUser } from '../utils/auth.js';
+import { getAdminEmails, publicUser } from '../utils/auth.js';
 
 const router = express.Router();
 
-router.use(requireAuth, authorize('admin'));
+router.use(requireAuth);
 
 const escapeRegExp = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
@@ -74,6 +75,10 @@ const budgetResponse = (report) => ({
   category: report.category,
   status: report.status,
   date: report.reportDate.toISOString().slice(0, 10),
+  fileUrl: report.cloudinary?.secureUrl || report.fileUrl,
+  fileKey: report.cloudinary?.publicId || report.fileKey,
+  fileSize: report.fileSize || report.cloudinary?.bytes || 0,
+  cloudinary: report.cloudinary || {},
 });
 
 const documentResponse = (document) => ({
@@ -89,6 +94,106 @@ const documentResponse = (document) => ({
     : '0 MB',
   status: document.status,
 });
+
+router.get(
+  '/managers',
+  authorize('admin'),
+  asyncHandler(async (req, res) => {
+    const managers = await User.find({ role: 'manager' }).sort({ createdAt: -1 });
+    res.json(managers.map(publicUser));
+  })
+);
+
+router.post(
+  '/managers',
+  authorize('admin'),
+  asyncHandler(async (req, res) => {
+    const email = String(req.body.email || '').trim().toLowerCase();
+    const name = String(req.body.name || '').trim();
+
+    if (!email || !name) {
+      res.status(400);
+      throw new Error('Manager name and email are required');
+    }
+
+    let manager = await User.findOne({ email });
+    if (manager?.role === 'admin' || getAdminEmails().has(email)) {
+      res.status(409);
+      throw new Error('The chairperson account cannot be changed into a manager');
+    }
+
+    if (!manager) {
+      manager = await User.create({
+        email,
+        name,
+        role: 'manager',
+        authProvider: 'google',
+        isActive: true,
+        status: 'active',
+      });
+    } else {
+      manager.name = name || manager.name;
+      manager.role = 'manager';
+      manager.isActive = true;
+      manager.status = 'active';
+      await manager.save();
+    }
+
+    await logActivity({
+      req,
+      user: req.user,
+      action: 'Added manager account',
+      actionType: 'create',
+      resourceType: 'User',
+      resourceId: manager._id,
+      details: manager.email,
+    });
+
+    res.status(201).json(publicUser(manager));
+  })
+);
+
+router.delete(
+  '/managers/:id',
+  authorize('admin'),
+  asyncHandler(async (req, res) => {
+    const manager = await User.findOne({ _id: req.params.id, role: 'manager' });
+
+    if (!manager) {
+      res.status(404);
+      throw new Error('Manager account not found');
+    }
+
+    manager.role = 'user';
+    await manager.save();
+
+    const existingYouthProfile = await YouthProfile.exists({ user: manager._id });
+    if (!existingYouthProfile) {
+      await YouthProfile.create({
+        user: manager._id,
+        name: manager.name,
+        email: manager.email,
+        barangay: manager.barangay || 'Masagui',
+        createdBy: req.user._id,
+        updatedBy: req.user._id,
+      });
+    }
+
+    await logActivity({
+      req,
+      user: req.user,
+      action: 'Removed manager access',
+      actionType: 'delete',
+      resourceType: 'User',
+      resourceId: manager._id,
+      details: manager.email,
+    });
+
+    res.json({ message: 'Manager access removed' });
+  })
+);
+
+router.use(authorize('admin', 'manager'));
 
 router.get(
   '/youth',
@@ -342,6 +447,10 @@ router.post(
       ...req.body,
       amount: parseAmount(req.body.amount),
       reportDate: req.body.date || req.body.reportDate || new Date(),
+      fileUrl: req.body.fileUrl || req.body.cloudinary?.secureUrl || '',
+      fileKey: req.body.fileKey || req.body.cloudinary?.publicId || '',
+      fileSize: Number(req.body.fileSize || req.body.cloudinary?.bytes || 0),
+      cloudinary: req.body.cloudinary || {},
       createdBy: req.user._id,
     });
 
@@ -364,6 +473,10 @@ router.put(
       ...req.body,
       ...(req.body.amount !== undefined && { amount: parseAmount(req.body.amount) }),
       ...(req.body.date && { reportDate: req.body.date }),
+      ...(req.body.fileUrl !== undefined && { fileUrl: req.body.fileUrl }),
+      ...(req.body.fileKey !== undefined && { fileKey: req.body.fileKey }),
+      ...(req.body.fileSize !== undefined && { fileSize: Number(req.body.fileSize) }),
+      ...(req.body.cloudinary && { cloudinary: req.body.cloudinary }),
     };
 
     const report = await BudgetReport.findByIdAndUpdate(req.params.id, update, {

@@ -22,6 +22,7 @@ import DocumentManagement from '../pages/admin/DocumentManagement';
 import Messages from '../pages/admin/Messages';
 import HistoryLog from '../pages/admin/HistoryLog';
 import AdminProfile from '../pages/admin/AdminProfile';
+import ManagerManagement from '../pages/admin/ManagerManagement';
 
 // User Pages
 import UserDashboard from '../pages/user/UserDashboard';
@@ -41,7 +42,7 @@ const LoadingScreen = () => (
   </div>
 );
 
-const roleHome = (role) => (role === 'admin' ? '/admin' : '/user');
+const roleHome = (role) => (['admin', 'manager'].includes(role) ? '/admin' : '/user');
 
 const ProtectedRoute = ({ children, role }) => {
   const { user, loading } = useAuth();
@@ -55,7 +56,13 @@ const ProtectedRoute = ({ children, role }) => {
     return <Navigate to="/login" replace state={{ from: location.pathname }} />;
   }
 
-  if (role && user.role !== role) {
+  const roleAllowed =
+    !role ||
+    (role === 'chairperson'
+      ? user.role === 'admin'
+      : user.role === role || (role === 'admin' && user.role === 'manager'));
+
+  if (!roleAllowed) {
     return <Navigate to={roleHome(user.role)} replace />;
   }
 
@@ -145,6 +152,14 @@ const AppRoutes = () => {
         <Route path="messages" element={<Messages />} />
         <Route path="history" element={<HistoryLog />} />
         <Route path="profile" element={<AdminProfile />} />
+        <Route
+          path="managers"
+          element={
+            <ProtectedRoute role="chairperson">
+              <ManagerManagement />
+            </ProtectedRoute>
+          }
+        />
       </Route>
 
       <Route

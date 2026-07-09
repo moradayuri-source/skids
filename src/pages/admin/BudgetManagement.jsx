@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { IoAddOutline, IoPencilOutline, IoTrashOutline } from 'react-icons/io5';
+import { IoAddOutline, IoDownloadOutline, IoPencilOutline, IoTrashOutline } from 'react-icons/io5';
 import Card from '../../components/common/Card';
 import Table from '../../components/common/Table';
 import Button from '../../components/common/Button';
@@ -7,6 +7,7 @@ import Input from '../../components/common/Input';
 import Modal from '../../components/common/Modal';
 import { SkeletonTable } from '../../components/common/Skeleton';
 import { api } from '../../services/api';
+import { cloudinaryAttachmentUrl, uploadToCloudinary } from '../../services/upload';
 
 const BudgetManagement = () => {
   const [budgetData, setBudgetData] = useState([]);
@@ -19,7 +20,8 @@ const BudgetManagement = () => {
     title: '',
     amount: '',
     category: '',
-    status: 'Pending'
+    status: 'Pending',
+    file: null,
   });
 
   useEffect(() => {
@@ -66,6 +68,21 @@ const BudgetManagement = () => {
       header: 'Actions',
       render: (row) => (
         <div className="flex gap-2">
+          {row.fileUrl && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() =>
+                window.open(
+                  cloudinaryAttachmentUrl(row.fileUrl, row.title),
+                  '_blank',
+                  'noopener,noreferrer'
+                )
+              }
+            >
+              <IoDownloadOutline className="w-4 h-4" />
+            </Button>
+          )}
           <Button 
             variant="primary" 
             size="sm"
@@ -87,13 +104,13 @@ const BudgetManagement = () => {
 
   const handleAdd = () => {
     setSelectedBudget(null);
-    setFormData({ title: '', amount: '', category: '', status: 'Pending' });
+    setFormData({ title: '', amount: '', category: '', status: 'Pending', file: null });
     setIsModalOpen(true);
   };
 
   const handleEdit = (budget) => {
     setSelectedBudget(budget);
-    setFormData({ ...budget, amount: budget.rawAmount ?? budget.amount });
+    setFormData({ ...budget, amount: budget.rawAmount ?? budget.amount, file: null });
     setIsModalOpen(true);
   };
 
@@ -116,11 +133,22 @@ const BudgetManagement = () => {
     setSaving(true);
     setError('');
     try {
+      let uploadedFile = null;
+      if (formData.file) {
+        uploadedFile = await uploadToCloudinary(formData.file, { purpose: 'budgets' });
+      }
+
       const payload = {
         title: formData.title,
         amount: formData.amount,
         category: formData.category,
         status: formData.status,
+        ...(uploadedFile && {
+          fileUrl: uploadedFile.secureUrl,
+          fileKey: uploadedFile.publicId,
+          fileSize: uploadedFile.bytes,
+          cloudinary: uploadedFile,
+        }),
       };
       const response = selectedBudget
         ? await api.admin.updateBudget(selectedBudget.id, payload)
@@ -218,6 +246,22 @@ const BudgetManagement = () => {
               <option value="Approved">Approved</option>
               <option value="Rejected">Rejected</option>
             </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Supporting File <span className="text-gray-400">(optional)</span>
+            </label>
+            <input
+              type="file"
+              accept="image/*,application/pdf"
+              onChange={(event) =>
+                setFormData((current) => ({ ...current, file: event.target.files?.[0] || null }))
+              }
+              className="w-full rounded-lg border border-gray-300 px-4 py-2 file:mr-4 file:rounded-lg file:border-0 file:bg-primary-50 file:px-4 file:py-2 file:text-sm file:font-medium file:text-primary-700 hover:file:bg-primary-100"
+            />
+            {selectedBudget?.fileUrl && !formData.file && (
+              <p className="mt-1 text-xs text-gray-500">The current attachment will be kept.</p>
+            )}
           </div>
         </div>
         <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-gray-200">

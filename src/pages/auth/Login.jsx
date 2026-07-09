@@ -5,7 +5,7 @@ import { IoShieldCheckmarkOutline } from 'react-icons/io5';
 import Card from '../../components/common/Card';
 import useAuth from '../../hooks/useAuth';
 
-const roleHome = (role) => (role === 'admin' ? '/admin' : '/user');
+const roleHome = (role) => (['admin', 'manager'].includes(role) ? '/admin' : '/user');
 
 const Login = () => {
   const { loginWithGoogle } = useAuth();

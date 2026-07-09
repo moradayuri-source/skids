@@ -5,7 +5,7 @@ import { getCloudinaryConfig } from '../config/cloudinary.js';
 
 const router = express.Router();
 
-const allowedPurposes = new Set(['avatars', 'documents', 'announcements', 'events']);
+const allowedPurposes = new Set(['avatars', 'documents', 'budgets', 'announcements', 'events']);
 
 const normalizePurpose = (purpose) => {
   if (allowedPurposes.has(purpose)) {
