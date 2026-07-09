@@ -1,0 +1,99 @@
+import { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { 
+  IoMenu, 
+  IoClose, 
+  IoNotificationsOutline, 
+  IoPersonCircleOutline,
+  IoSettingsOutline,
+  IoLogOutOutline
+} from 'react-icons/io5';
+import useAuth from '../../hooks/useAuth';
+
+const Navbar = ({ 
+  title = 'SKIDS', 
+  userRole = 'Admin',
+  userName = 'SK Chairwoman',
+  onToggleSidebar,
+  isSidebarOpen,
+  role = 'admin'
+}) => {
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const { logout, user } = useAuth();
+  const navigate = useNavigate();
+  const currentRole = user?.role || role;
+  const displayName = user?.name || userName;
+  const displayRole = user?.role === 'admin' ? 'Admin' : userRole;
+  const profilePath = currentRole === 'admin' ? '/admin/profile' : '/user/profile';
+
+  const handleLogout = async () => {
+    await logout();
+    setIsDropdownOpen(false);
+    navigate('/login', { replace: true });
+  };
+
+  return (
+    <nav className="bg-white border-b border-gray-200 fixed top-0 left-0 right-0 z-30 h-16">
+      <div className="flex items-center justify-between h-full px-4">
+        <div className="flex items-center gap-4">
+          <button
+            onClick={onToggleSidebar}
+            className="p-2 rounded-lg hover:bg-gray-100 transition-colors duration-200 lg:hidden"
+          >
+            {isSidebarOpen ? (
+              <IoClose className="w-6 h-6 text-gray-600" />
+            ) : (
+              <IoMenu className="w-6 h-6 text-gray-600" />
+            )}
+          </button>
+          <h1 className="text-xl font-bold text-primary-600">{title}</h1>
+        </div>
+
+        <div className="flex items-center gap-4">
+          <button className="p-2 rounded-lg hover:bg-gray-100 transition-colors duration-200 relative">
+            <IoNotificationsOutline className="w-6 h-6 text-gray-600" />
+            <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+          </button>
+
+          <div className="relative">
+            <button
+              onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+              className="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-100 transition-colors duration-200"
+            >
+              <IoPersonCircleOutline className="w-8 h-8 text-gray-600" />
+              <span className="hidden md:inline text-sm font-medium text-gray-700">
+                {displayName}
+              </span>
+            </button>
+
+            {isDropdownOpen && (
+              <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
+                <div className="px-4 py-2 border-b border-gray-100">
+                  <p className="text-sm font-medium text-gray-900">{displayName}</p>
+                  <p className="text-xs text-gray-500">{displayRole}</p>
+                </div>
+                <Link
+                  to={profilePath}
+                  className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors duration-200"
+                  onClick={() => setIsDropdownOpen(false)}
+                >
+                  <IoSettingsOutline className="w-4 h-4" />
+                  Profile Settings
+                </Link>
+                <button
+                  onClick={handleLogout}
+                  className="flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors duration-200 w-full"
+                >
+                  <IoLogOutOutline className="w-4 h-4" />
+                  Logout
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </nav>
+  );
+};
+
+export default Navbar;
