@@ -5,42 +5,65 @@ import Input from '../../components/common/Input';
 import Button from '../../components/common/Button';
 import Modal from '../../components/common/Modal';
 import { SkeletonList } from '../../components/common/Skeleton';
+import { api } from '../../services/api';
+
+const displayMessage = (message) => ({
+  ...message,
+  date: message.createdAt ? new Date(message.createdAt).toLocaleString() : '',
+});
 
 const UserMessages = () => {
   const [messages, setMessages] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [sending, setSending] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   const [formData, setFormData] = useState({
     subject: '',
     message: ''
   });
 
   useEffect(() => {
-    setLoading(false);
+    let active = true;
+    api.user
+      .getMessages()
+      .then((response) => {
+        if (active) setMessages(response.data.map(displayMessage));
+      })
+      .catch((loadError) => {
+        if (active) setError(loadError.response?.data?.message || 'Unable to load message history.');
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
   }, []);
 
-  const handleSend = () => {
-    // Future API call: sendMessage(formData)
-    // axios.post('/api/messages', formData)
-    //   .then(() => {
-    //     setIsModalOpen(false);
-    //     setFormData({ subject: '', message: '' });
-    //     alert('Message sent successfully!');
-    //   })
-    //   .catch(error => console.error('Error sending message:', error));
+  const handleSend = async () => {
+    const subject = formData.subject.trim();
+    const message = formData.message.trim();
+    if (!subject || !message) {
+      setError('Subject and message are required.');
+      return;
+    }
 
-    if (formData.subject && formData.message) {
-      const newMessage = {
-        id: messages.length + 1,
-        ...formData,
-        sender: 'You',
-        date: new Date().toLocaleDateString(),
-        status: 'sent'
-      };
-      setMessages([...messages, newMessage]);
+    setSending(true);
+    setError('');
+    setSuccess('');
+    try {
+      const response = await api.user.sendMessage({ subject, message });
+      setMessages((current) => [displayMessage(response.data), ...current]);
       setIsModalOpen(false);
       setFormData({ subject: '', message: '' });
-      alert('Message sent successfully!');
+      setSuccess('Your message was sent to the SK office.');
+    } catch (sendError) {
+      setError(sendError.response?.data?.message || 'Unable to send your message.');
+    } finally {
+      setSending(false);
     }
   };
 
@@ -63,6 +86,17 @@ const UserMessages = () => {
         </Button>
       </div>
 
+      {error && (
+        <div className="mb-4 rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700">
+          {error}
+        </div>
+      )}
+      {success && (
+        <div className="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-700">
+          {success}
+        </div>
+      )}
+
       <Card className="min-h-[420px] p-5 sm:p-6">
         {loading ? (
           <SkeletonList rows={3} />
@@ -78,20 +112,37 @@ const UserMessages = () => {
           </div>
         ) : (
           <div className="space-y-4">
-            {messages.map((message) => (
-              <div key={message.id} className="border-b border-gray-100 pb-4 last:border-0 last:pb-0">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-900">{message.subject}</p>
-                    <p className="text-sm text-gray-600">{message.message}</p>
-                    <div className="flex items-center gap-3 mt-1">
-                      <span className="text-xs text-gray-400">Sent: {message.date}</span>
-                      <span className="text-xs text-green-600">✓ Sent</span>
+            {messages.map((message) => {
+              const latestReply = message.replies?.at(-1);
+              return (
+                <div key={message.id} className="rounded-xl border border-slate-100 bg-slate-50/60 p-4">
+                  <div className="flex items-start justify-between">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <p className="text-sm font-semibold text-slate-900">{message.subject}</p>
+                        <span className={`rounded-full px-2.5 py-1 text-[10px] font-semibold ${
+                          message.status === 'unread'
+                            ? 'bg-amber-100 text-amber-700'
+                            : 'bg-emerald-100 text-emerald-700'
+                        }`}>
+                          {message.status === 'unread' ? 'Sent' : 'Read by SK'}
+                        </span>
+                      </div>
+                      <p className="mt-2 text-sm leading-6 text-slate-600">{message.message}</p>
+                      <span className="mt-2 block text-xs text-slate-400">Sent: {message.date}</span>
+                      {latestReply && (
+                        <div className="mt-4 rounded-lg border border-primary-100 bg-primary-50 p-3">
+                          <p className="text-xs font-semibold text-primary-700">
+                            Reply from {latestReply.senderName || 'SK Office'}
+                          </p>
+                          <p className="mt-1 text-sm text-slate-700">{latestReply.message}</p>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </Card>
@@ -126,11 +177,11 @@ const UserMessages = () => {
           </div>
         </div>
         <div className="mt-6 flex justify-end gap-3 border-t border-slate-100 pt-4">
-          <Button variant="secondary" onClick={() => setIsModalOpen(false)}>
+          <Button variant="secondary" onClick={() => setIsModalOpen(false)} disabled={sending}>
             Cancel
           </Button>
-          <Button variant="primary" onClick={handleSend} icon={IoPaperPlaneOutline}>
-            Send Message
+          <Button variant="primary" onClick={handleSend} icon={IoPaperPlaneOutline} disabled={sending}>
+            {sending ? 'Sending...' : 'Send Message'}
           </Button>
         </div>
       </Modal>

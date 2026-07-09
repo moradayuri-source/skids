@@ -146,6 +146,7 @@ export const api = {
     getEvents: () => apiClient.get('/events'),
     getBudget: () => apiClient.get('/budget'),
     getDocuments: () => apiClient.get('/documents'),
+    getMessages: () => apiClient.get('/messages'),
     sendMessage: (data) => apiClient.post('/messages', data),
     getProfile: () => apiClient.get('/user/profile'),
     updateProfile: (data) => apiClient.put('/user/profile', data),

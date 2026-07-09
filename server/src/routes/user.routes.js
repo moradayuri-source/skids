@@ -86,12 +86,20 @@ router.get(
 router.post(
   '/messages',
   asyncHandler(async (req, res) => {
+    const subject = String(req.body.subject || '').trim();
+    const content = String(req.body.message || '').trim();
+
+    if (!subject || !content) {
+      res.status(400);
+      throw new Error('Subject and message are required');
+    }
+
     const message = await Message.create({
       sender: req.user._id,
       senderName: req.user.name,
       senderEmail: req.user.email,
-      subject: req.body.subject,
-      message: req.body.message,
+      subject,
+      message: content,
     });
 
     await logActivity({
@@ -105,6 +113,14 @@ router.post(
     });
 
     res.status(201).json(message);
+  })
+);
+
+router.get(
+  '/messages',
+  asyncHandler(async (req, res) => {
+    const messages = await Message.find({ sender: req.user._id }).sort({ createdAt: -1 });
+    res.json(messages);
   })
 );
 

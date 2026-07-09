@@ -96,7 +96,7 @@ const Navbar = ({
             </button>
 
             {isNotificationsOpen && (
-              <div className="absolute right-0 mt-2 w-80 max-w-[calc(100vw-2rem)] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl">
+              <div className="fixed left-4 right-4 top-16 mt-2 w-auto overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl sm:absolute sm:left-auto sm:right-0 sm:top-auto sm:w-80 sm:max-w-[calc(100vw-2rem)]">
                 <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3">
                   <p className="font-semibold text-gray-900">Notifications</p>
                   <button
