@@ -8,6 +8,7 @@ import {
 } from 'react-icons/io5';
 import Card from '../../components/common/Card';
 import { SkeletonCard, SkeletonList } from '../../components/common/Skeleton';
+import useAuth from '../../hooks/useAuth';
 import { api } from '../../services/api';
 
 const StatCard = ({ title, value, icon: Icon, color = 'primary', subtitle }) => {
@@ -19,14 +20,14 @@ const StatCard = ({ title, value, icon: Icon, color = 'primary', subtitle }) => 
   };
 
   return (
-    <Card className="p-6">
-      <div className="flex items-center justify-between">
+    <Card className="p-5">
+      <div className="flex items-start justify-between gap-4">
         <div>
-          <p className="text-sm font-medium text-gray-500">{title}</p>
-          <p className="text-2xl font-bold text-gray-900 mt-1">{value}</p>
-          {subtitle && <p className="text-xs text-gray-500 mt-1">{subtitle}</p>}
+          <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">{title}</p>
+          <p className="mt-2 text-2xl font-bold text-slate-900">{value}</p>
+          {subtitle && <p className="mt-1 text-xs text-slate-500">{subtitle}</p>}
         </div>
-        <div className={`p-3 rounded-xl ${colors[color]}`}>
+        <div className={`rounded-xl p-3 ${colors[color]}`}>
           <Icon className="w-6 h-6" />
         </div>
       </div>
@@ -35,6 +36,7 @@ const StatCard = ({ title, value, icon: Icon, color = 'primary', subtitle }) => 
 };
 
 const AdminDashboard = () => {
+  const { user } = useAuth();
   const [stats, setStats] = useState({
     totalYouth: 0,
     totalAnnouncements: 0,
@@ -86,10 +88,19 @@ const AdminDashboard = () => {
   }, []);
 
   return (
-    <div>
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-        <p className="text-gray-500 mt-1">Welcome back, SK Chairwoman! Here's what's happening with your SKIDS.</p>
+    <div className="space-y-6">
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#1763ed] via-[#2455df] to-[#3532a4] px-6 py-7 text-white shadow-lg shadow-blue-900/15 sm:px-8">
+        <div className="absolute -right-12 -top-20 h-52 w-52 rounded-full bg-white/10" />
+        <div className="absolute -bottom-20 right-32 h-40 w-40 rounded-full bg-white/5" />
+        <div className="relative">
+          <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-blue-100">Dashboard</p>
+          <h1 className="mt-2 text-2xl font-bold sm:text-3xl">
+            Welcome back, {user?.name?.split(' ')[0] || 'Chairperson'}!
+          </h1>
+          <p className="mt-1 text-sm text-blue-100">
+            Sangguniang Kabataan Information Dissemination System
+          </p>
+        </div>
       </div>
       {error && (
         <div className="mb-6 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
@@ -99,13 +110,13 @@ const AdminDashboard = () => {
 
       {/* Stats Grid */}
       {loading ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
           {Array.from({ length: 4 }, (_, index) => (
             <SkeletonCard key={index} />
           ))}
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <StatCard
             title="Total Youth Members"
             value={stats.totalYouth}
@@ -135,27 +146,35 @@ const AdminDashboard = () => {
       )}
 
       {/* Recent Activity */}
-      <Card title="Recent Activity" className="p-6">
+      <Card
+        title="Recent Activity"
+        subtitle="Latest changes made across the SKIDS workspace."
+        icon={IoTimeOutline}
+        className="p-5 sm:p-6"
+      >
         {loading ? (
           <SkeletonList rows={4} />
         ) : (
-          <div className="space-y-4">
+          <div className="divide-y divide-slate-100">
           {activities.map((activity) => (
-            <div key={activity.id} className="flex items-start gap-3 pb-4 border-b border-gray-100 last:border-0 last:pb-0">
-              <div className="p-2 bg-gray-100 rounded-lg">
-                <IoTimeOutline className="w-4 h-4 text-gray-600" />
+            <div key={activity.id} className="flex items-start gap-3 py-4 first:pt-0 last:pb-0">
+              <div className="rounded-lg bg-primary-50 p-2">
+                <IoTimeOutline className="h-4 w-4 text-primary-600" />
               </div>
               <div className="flex-1">
-                <p className="text-sm text-gray-900">
+                <p className="text-sm text-slate-800">
                   <span className="font-medium">{activity.user}</span> {activity.action}
                 </p>
-                <p className="text-sm text-gray-500">{activity.details}</p>
-                <p className="text-xs text-gray-400 mt-1">
+                <p className="text-sm text-slate-500">{activity.details}</p>
+                <p className="mt-1 text-xs text-slate-400">
                   {new Date(activity.date).toLocaleString()}
                 </p>
               </div>
             </div>
           ))}
+          {!activities.length && (
+            <p className="py-8 text-center text-sm text-slate-500">No recent activity yet.</p>
+          )}
           </div>
         )}
       </Card>

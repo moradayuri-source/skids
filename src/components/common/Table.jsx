@@ -9,14 +9,14 @@ const Table = ({
   ...props
 }) => {
   return (
-    <div className={`overflow-x-auto ${className}`}>
-      <table className="min-w-full divide-y divide-gray-200" {...props}>
-        <thead className="bg-gray-50">
+    <div className={`overflow-x-auto rounded-xl border border-slate-100 ${className}`}>
+      <table className="min-w-full divide-y divide-slate-100" {...props}>
+        <thead className="bg-slate-50/80">
           <tr>
             {columns.map((column, index) => (
               <th
                 key={index}
-                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                className="px-5 py-3 text-left text-[11px] font-bold uppercase tracking-wider text-slate-500"
                 style={{ width: column.width || 'auto' }}
               >
                 {column.header}
@@ -24,7 +24,7 @@ const Table = ({
             ))}
           </tr>
         </thead>
-        <tbody className="bg-white divide-y divide-gray-200">
+        <tbody className="divide-y divide-slate-100 bg-white">
           {data.length === 0 ? (
             <tr>
               <td colSpan={columns.length} className="px-6 py-4 text-center text-gray-500">
@@ -37,14 +37,14 @@ const Table = ({
                 key={rowIndex}
                 onClick={() => onRowClick && onRowClick(row)}
                 className={`
-                  ${hoverable ? 'hover:bg-gray-50 cursor-pointer' : ''}
-                  ${striped && rowIndex % 2 === 0 ? 'bg-gray-50' : ''}
+                  ${hoverable ? 'cursor-pointer hover:bg-primary-50/40' : ''}
+                  ${striped && rowIndex % 2 === 0 ? 'bg-slate-50/50' : ''}
                 `}
               >
                 {columns.map((column, colIndex) => (
                   <td
                     key={colIndex}
-                    className="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
+                    className="whitespace-nowrap px-5 py-3.5 text-sm text-slate-700"
                   >
                     {column.render ? column.render(row) : row[column.key]}
                   </td>

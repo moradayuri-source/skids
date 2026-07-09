@@ -11,7 +11,7 @@ const AdminLayout = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#f4f8fc]">
       <Navbar 
         onToggleSidebar={toggleSidebar}
         isSidebarOpen={isSidebarOpen}
@@ -28,8 +28,8 @@ const AdminLayout = () => {
           role="admin"
         />
         
-        <main className="min-h-[calc(100vh-4rem)] p-6 lg:ml-64 lg:p-8">
-          <Outlet />
+        <main className="min-h-[calc(100vh-4rem)] px-4 py-5 sm:px-6 lg:ml-64 lg:px-8 lg:py-7">
+          <div className="mx-auto w-full max-w-[1500px]"><Outlet /></div>
         </main>
       </div>
     </div>

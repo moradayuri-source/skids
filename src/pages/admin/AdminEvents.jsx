@@ -1,11 +1,18 @@
 import { useState, useEffect } from 'react';
-import { IoAddOutline, IoPencilOutline, IoTrashOutline } from 'react-icons/io5';
+import {
+  IoAddOutline,
+  IoChevronBack,
+  IoChevronForward,
+  IoLocationOutline,
+  IoPencilOutline,
+  IoTimeOutline,
+  IoTrashOutline,
+} from 'react-icons/io5';
 import Card from '../../components/common/Card';
-import Table from '../../components/common/Table';
 import Button from '../../components/common/Button';
 import Input from '../../components/common/Input';
 import Modal from '../../components/common/Modal';
-import { SkeletonTable } from '../../components/common/Skeleton';
+import { SkeletonList } from '../../components/common/Skeleton';
 import { api } from '../../services/api';
 
 const todayDate = () => {
@@ -15,12 +22,15 @@ const todayDate = () => {
 };
 
 const AdminEvents = () => {
+  const now = new Date();
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
+  const [selectedMonth, setSelectedMonth] = useState(now.getMonth());
+  const [selectedYear, setSelectedYear] = useState(now.getFullYear());
   const [formData, setFormData] = useState({
     title: '',
     date: '',
@@ -50,34 +60,6 @@ const AdminEvents = () => {
       active = false;
     };
   }, []);
-
-  const columns = [
-    { key: 'title', header: 'Event Title' },
-    { key: 'date', header: 'Date' },
-    { key: 'time', header: 'Time' },
-    { key: 'location', header: 'Location' },
-    {
-      header: 'Actions',
-      render: (row) => (
-        <div className="flex gap-2">
-          <Button 
-            variant="primary" 
-            size="sm"
-            onClick={() => handleEdit(row)}
-          >
-            <IoPencilOutline className="w-4 h-4" />
-          </Button>
-          <Button 
-            variant="danger" 
-            size="sm"
-            onClick={() => handleDelete(row.id)}
-          >
-            <IoTrashOutline className="w-4 h-4" />
-          </Button>
-        </div>
-      )
-    }
-  ];
 
   const handleAdd = () => {
     setSelectedEvent(null);
@@ -147,34 +129,123 @@ const AdminEvents = () => {
     });
   };
 
+  const months = [
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December',
+  ];
+  const firstWeekday = new Date(selectedYear, selectedMonth, 1).getDay();
+  const daysInMonth = new Date(selectedYear, selectedMonth + 1, 0).getDate();
+  const calendarCells = [
+    ...Array.from({ length: firstWeekday }, () => null),
+    ...Array.from({ length: daysInMonth }, (_, index) => index + 1),
+  ];
+  const eventDates = new Set(events.map((event) => String(event.date).slice(0, 10)));
+  const upcomingEvents = events.filter((event) => event.date >= todayDate());
+
+  const changeMonth = (direction) => {
+    const next = new Date(selectedYear, selectedMonth + direction, 1);
+    setSelectedMonth(next.getMonth());
+    setSelectedYear(next.getFullYear());
+  };
+
   return (
     <div>
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Events</h1>
-          <p className="text-gray-500 mt-1">Create and manage SK events and activities.</p>
+          <h1 className="page-title">Event Schedule</h1>
+          <p className="page-subtitle">Create and manage official barangay events for the admin and officer side.</p>
         </div>
         <Button onClick={handleAdd} icon={IoAddOutline}>
-          Create Event
+          Add Event
         </Button>
       </div>
 
-      <Card className="p-6">
-        {error && (
-          <div className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
-            {error}
+      {error && (
+        <div className="mb-4 rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700">
+          {error}
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1.45fr)_minmax(320px,0.75fr)]">
+        <Card className="p-5 sm:p-6">
+          <div className="mb-5">
+            <h2 className="font-semibold text-slate-900">Calendar View</h2>
+            <p className="mt-0.5 text-xs text-slate-500">Event dates are highlighted in light blue.</p>
           </div>
-        )}
-        {loading ? (
-          <SkeletonTable rows={5} columns={5} />
-        ) : (
-          <Table
-            columns={columns}
-            data={events}
-            emptyMessage="No events scheduled."
-          />
-        )}
-      </Card>
+          <div className="mb-4 flex items-center justify-between">
+            <button type="button" aria-label="Previous month" onClick={() => changeMonth(-1)} className="rounded-lg p-2 text-slate-500 hover:bg-slate-100">
+              <IoChevronBack className="h-5 w-5" />
+            </button>
+            <h3 className="text-sm font-bold text-slate-800">{months[selectedMonth]} {selectedYear}</h3>
+            <button type="button" aria-label="Next month" onClick={() => changeMonth(1)} className="rounded-lg p-2 text-slate-500 hover:bg-slate-100">
+              <IoChevronForward className="h-5 w-5" />
+            </button>
+          </div>
+          <div className="grid grid-cols-7 gap-1.5 text-center">
+            {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
+              <div key={day} className="py-2 text-[10px] font-bold uppercase tracking-wide text-slate-400">{day}</div>
+            ))}
+            {calendarCells.map((day, index) => {
+              if (!day) return <div key={`blank-${index}`} aria-hidden="true" />;
+              const cellDate = `${selectedYear}-${String(selectedMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+              const hasEvent = eventDates.has(cellDate);
+              const isToday = cellDate === todayDate();
+              return (
+                <div
+                  key={cellDate}
+                  className={`relative flex min-h-12 items-center justify-center rounded-xl border text-sm transition sm:min-h-16 ${
+                    hasEvent
+                      ? 'border-sky-200 bg-sky-100 font-semibold text-sky-800'
+                      : 'border-slate-100 text-slate-600 hover:bg-slate-50'
+                  } ${isToday ? 'font-extrabold ring-2 ring-primary-500 ring-offset-1' : ''}`}
+                >
+                  {day}
+                  {hasEvent && <span className="absolute bottom-2 h-1.5 w-1.5 rounded-full bg-sky-600" />}
+                </div>
+              );
+            })}
+          </div>
+        </Card>
+
+        <Card className="p-5 sm:p-6">
+          <div className="mb-5">
+            <h2 className="font-semibold text-slate-900">Upcoming Events</h2>
+            <p className="mt-0.5 text-xs text-slate-500">Manage scheduled activities without leaving this view.</p>
+          </div>
+          {loading ? (
+            <SkeletonList rows={4} />
+          ) : upcomingEvents.length === 0 ? (
+            <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-4 py-12 text-center text-sm text-slate-500">
+              No upcoming events scheduled.
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {upcomingEvents.map((event) => (
+                <article key={event.id} className="rounded-xl border border-slate-100 bg-slate-50/70 p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <h3 className="font-semibold text-slate-900">{event.title}</h3>
+                      <div className="mt-2 space-y-1 text-xs text-slate-500">
+                        <p className="flex items-center gap-1.5"><IoTimeOutline /> {event.date} at {event.time}</p>
+                        <p className="flex items-center gap-1.5"><IoLocationOutline /> {event.location}</p>
+                      </div>
+                    </div>
+                    <div className="flex gap-1.5">
+                      <Button size="sm" variant="outline" aria-label={`Edit ${event.title}`} onClick={() => handleEdit(event)}>
+                        <IoPencilOutline className="h-4 w-4" />
+                      </Button>
+                      <Button size="sm" variant="danger" aria-label={`Delete ${event.title}`} onClick={() => handleDelete(event.id)}>
+                        <IoTrashOutline className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                  {event.description && <p className="mt-3 text-sm leading-6 text-slate-600">{event.description}</p>}
+                </article>
+              ))}
+            </div>
+          )}
+        </Card>
+      </div>
 
       {/* Add/Edit Modal */}
       <Modal
@@ -218,17 +289,17 @@ const AdminEvents = () => {
             required
           />
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+            <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-600">Description</label>
             <textarea
               name="description"
               value={formData.description}
               onChange={handleInputChange}
               rows="3"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full rounded-lg border border-slate-200 px-3.5 py-2.5 text-sm outline-none focus:border-primary-400 focus:ring-4 focus:ring-primary-100"
             />
           </div>
         </div>
-        <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-gray-200">
+        <div className="mt-6 flex justify-end gap-3 border-t border-slate-100 pt-4">
           <Button variant="secondary" onClick={() => setIsModalOpen(false)} disabled={saving}>
             Cancel
           </Button>

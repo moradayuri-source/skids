@@ -53,24 +53,24 @@ const UserMessages = () => {
 
   return (
     <div>
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Messages</h1>
-          <p className="text-gray-500 mt-1">Send suggestions, concerns, or inquiries to SK officials.</p>
+          <h1 className="page-title">Messages</h1>
+          <p className="page-subtitle">Send suggestions, concerns, or inquiries to SK officials.</p>
         </div>
         <Button onClick={() => setIsModalOpen(true)} icon={IoPaperPlaneOutline}>
           New Message
         </Button>
       </div>
 
-      <Card className="p-6">
+      <Card className="min-h-[420px] p-5 sm:p-6">
         {loading ? (
           <SkeletonList rows={3} />
         ) : messages.length === 0 ? (
-          <div className="text-center py-12">
+          <div className="flex min-h-[340px] flex-col items-center justify-center text-center">
             <div className="flex justify-center mb-4">
-              <div className="p-4 bg-gray-100 rounded-full">
-                <IoChatbubbleOutline className="w-12 h-12 text-gray-400" />
+              <div className="rounded-full bg-slate-100 p-4 ring-8 ring-slate-50">
+                <IoChatbubbleOutline className="h-12 w-12 text-slate-300" />
               </div>
             </div>
             <p className="text-gray-500">No messages sent yet.</p>
@@ -113,19 +113,19 @@ const UserMessages = () => {
             required
           />
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Message</label>
+            <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-600">Message</label>
             <textarea
               name="message"
               value={formData.message}
               onChange={handleInputChange}
               rows="5"
               placeholder="Type your message, suggestion, or concern here..."
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full rounded-lg border border-slate-200 px-3.5 py-2.5 text-sm outline-none focus:border-primary-400 focus:ring-4 focus:ring-primary-100"
               required
             />
           </div>
         </div>
-        <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-gray-200">
+        <div className="mt-6 flex justify-end gap-3 border-t border-slate-100 pt-4">
           <Button variant="secondary" onClick={() => setIsModalOpen(false)}>
             Cancel
           </Button>

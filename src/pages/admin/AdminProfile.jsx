@@ -126,8 +126,8 @@ const AdminProfile = () => {
     return (
       <div>
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-900">Profile Settings</h1>
-          <p className="text-gray-500 mt-1">Manage your account profile and information.</p>
+          <h1 className="page-title">Profile Settings</h1>
+          <p className="page-subtitle">Manage your account profile and information.</p>
         </div>
         <ProfileSkeleton />
       </div>
@@ -137,8 +137,8 @@ const AdminProfile = () => {
   return (
     <div>
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Profile Settings</h1>
-        <p className="text-gray-500 mt-1">Manage your account profile and information.</p>
+        <h1 className="page-title">Profile Settings</h1>
+        <p className="page-subtitle">Manage your account profile and information.</p>
       </div>
 
       {error && (
@@ -148,10 +148,12 @@ const AdminProfile = () => {
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <Card className="lg:col-span-1 p-6 text-center">
+        <Card className="overflow-hidden p-0 text-center lg:col-span-1">
+          <div className="h-20 bg-gradient-to-r from-primary-600 to-indigo-700" />
+          <div className="-mt-12 p-6">
           <div className="flex flex-col items-center">
             <div className="relative mb-4">
-              <div className="w-32 h-32 overflow-hidden rounded-full bg-primary-100 flex items-center justify-center">
+              <div className="flex h-32 w-32 items-center justify-center overflow-hidden rounded-full border-4 border-white bg-primary-100 shadow-lg">
                 {avatarSrc ? (
                   <img src={avatarSrc} alt={profile.name} className="h-full w-full object-cover" />
                 ) : (
@@ -165,17 +167,18 @@ const AdminProfile = () => {
                 </label>
               )}
             </div>
-            <h2 className="text-xl font-semibold text-gray-900">{profile.name}</h2>
-            <p className="text-sm text-gray-500">{profile.position}</p>
-            <div className="mt-4 w-full pt-4 border-t border-gray-200">
-              <p className="text-sm text-gray-600">Barangay {profile.barangay}</p>
+            <h2 className="text-xl font-semibold text-slate-900">{profile.name}</h2>
+            <p className="text-sm text-primary-600">{profile.position}</p>
+            <div className="mt-4 w-full border-t border-slate-100 pt-4">
+              <p className="text-sm text-slate-600">Barangay {profile.barangay}</p>
             </div>
+          </div>
           </div>
         </Card>
 
         <Card className="lg:col-span-2 p-6">
           <div className="flex items-center justify-between mb-6">
-            <h3 className="text-lg font-semibold text-gray-900">Personal Information</h3>
+            <h3 className="text-base font-semibold text-slate-900">Personal Information</h3>
             {!isEditing ? (
               <Button variant="primary" onClick={() => setIsEditing(true)}>
                 Edit Profile

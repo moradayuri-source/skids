@@ -35,8 +35,8 @@ const Announcements = () => {
   return (
     <div>
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Announcements</h1>
-        <p className="text-gray-500 mt-1">Stay informed with official SK announcements and updates.</p>
+        <h1 className="page-title">Announcements</h1>
+        <p className="page-subtitle">Stay informed with official SK announcements and updates.</p>
       </div>
 
       <div className="space-y-4">

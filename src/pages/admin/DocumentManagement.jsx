@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
 import { IoAddOutline, IoTrashOutline, IoDownloadOutline, IoDocumentTextOutline } from 'react-icons/io5';
 import Card from '../../components/common/Card';
-import Table from '../../components/common/Table';
 import Button from '../../components/common/Button';
+import FilePreview from '../../components/common/FilePreview';
 import Input from '../../components/common/Input';
 import Modal from '../../components/common/Modal';
-import { SkeletonTable } from '../../components/common/Skeleton';
+import { SkeletonGrid } from '../../components/common/Skeleton';
 import { api } from '../../services/api';
 import { cloudinaryAttachmentUrl, uploadToCloudinary } from '../../services/upload';
 
@@ -79,39 +79,6 @@ const DocumentManagement = () => {
     }
   };
 
-  const columns = [
-    { key: 'title', header: 'Document Title' },
-    { key: 'type', header: 'Type' },
-    { key: 'date', header: 'Upload Date' },
-    { key: 'fileSize', header: 'File Size' },
-    {
-      header: 'Status',
-      render: (row) => (
-        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(row.status)}`}>
-          {row.status}
-        </span>
-      ),
-    },
-    {
-      header: 'Actions',
-      render: (row) => (
-        <div className="flex gap-2">
-          <Button
-            variant="primary"
-            size="sm"
-            disabled={!row.fileUrl}
-            onClick={() => handleDownload(row)}
-          >
-            <IoDownloadOutline className="w-4 h-4" />
-          </Button>
-          <Button variant="danger" size="sm" onClick={() => handleDelete(row.id)}>
-            <IoTrashOutline className="w-4 h-4" />
-          </Button>
-        </div>
-      ),
-    },
-  ];
-
   const filteredDocuments = documents.filter((doc) =>
     doc.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
     doc.type.toLowerCase().includes(searchTerm.toLowerCase())
@@ -166,19 +133,19 @@ const DocumentManagement = () => {
 
   return (
     <div>
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Document Management</h1>
-          <p className="text-gray-500 mt-1">Store and manage official SK documents.</p>
+          <h1 className="page-title">Approved Resolution</h1>
+          <p className="page-subtitle">Upload approved resolutions with supporting documentation.</p>
         </div>
         <Button onClick={() => setIsModalOpen(true)} icon={IoAddOutline}>
           Upload Document
         </Button>
       </div>
 
-      <Card className="p-6">
+      <Card className="p-5 sm:p-6">
         {error && (
-          <div className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+          <div className="mb-4 rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700">
             {error}
           </div>
         )}
@@ -191,13 +158,45 @@ const DocumentManagement = () => {
           />
         </div>
         {loading ? (
-          <SkeletonTable rows={5} columns={6} />
+          <SkeletonGrid items={6} />
+        ) : filteredDocuments.length === 0 ? (
+          <div className="py-12 text-center">
+            <IoDocumentTextOutline className="mx-auto h-10 w-10 text-slate-300" />
+            <p className="mt-3 text-sm text-slate-500">No documents found.</p>
+          </div>
         ) : (
-          <Table
-            columns={columns}
-            data={filteredDocuments}
-            emptyMessage="No documents found."
-          />
+          <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
+            {filteredDocuments.map((document) => (
+              <article key={document.id} className="overflow-hidden rounded-xl border border-slate-200 bg-white transition hover:-translate-y-0.5 hover:shadow-lg">
+                <FilePreview
+                  url={document.fileUrl}
+                  format={document.cloudinary?.format}
+                  title={document.title}
+                  className="h-36 w-full border-b border-slate-100"
+                />
+                <div className="p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <h2 className="truncate font-semibold text-slate-900">{document.title}</h2>
+                      <p className="mt-1 text-xs text-slate-500">{document.type} - {document.fileSize}</p>
+                    </div>
+                    <span className={`rounded-full px-2.5 py-1 text-[10px] font-semibold ${getStatusColor(document.status)}`}>
+                      {document.status}
+                    </span>
+                  </div>
+                  <p className="mt-3 text-xs text-slate-400">{document.date}</p>
+                  <div className="mt-4 flex justify-end gap-2 border-t border-slate-100 pt-4">
+                    <Button size="sm" variant="outline" disabled={!document.fileUrl} aria-label={`Download ${document.title}`} onClick={() => handleDownload(document)}>
+                      <IoDownloadOutline className="h-4 w-4" />
+                    </Button>
+                    <Button size="sm" variant="danger" aria-label={`Delete ${document.title}`} onClick={() => handleDelete(document.id)}>
+                      <IoTrashOutline className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              </article>
+            ))}
+          </div>
         )}
       </Card>
 
@@ -216,12 +215,12 @@ const DocumentManagement = () => {
             required
           />
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Document Type</label>
+            <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-600">Document Type</label>
             <select
               name="type"
               value={formData.type}
               onChange={handleInputChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full rounded-lg border border-slate-200 bg-white px-3.5 py-2.5 text-sm outline-none focus:border-primary-400 focus:ring-4 focus:ring-primary-100"
             >
               <option value="">Select Type</option>
               <option value="Resolution">Resolution</option>
@@ -231,17 +230,17 @@ const DocumentManagement = () => {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">File</label>
+            <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-600">File</label>
             <input
               type="file"
               accept="image/*,application/pdf"
               onChange={handleFileChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100"
+              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm file:mr-4 file:rounded-lg file:border-0 file:bg-primary-50 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-primary-700 hover:file:bg-primary-100"
               required
             />
           </div>
         </div>
-        <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-gray-200">
+        <div className="mt-6 flex justify-end gap-3 border-t border-slate-100 pt-4">
           <Button variant="secondary" onClick={() => setIsModalOpen(false)} disabled={uploading}>
             Cancel
           </Button>

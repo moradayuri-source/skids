@@ -54,7 +54,7 @@ const Documents = () => {
         type="button"
         onClick={() => setViewMode('grid')}
         className={`flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium ${
-          viewMode === 'grid' ? 'bg-primary-50 text-primary-700' : 'text-gray-500 hover:bg-gray-50'
+          viewMode === 'grid' ? 'bg-primary-600 text-white shadow-sm' : 'text-slate-500 hover:bg-slate-50'
         }`}
       >
         <IoGridOutline className="h-4 w-4" /> Show in Grid
@@ -63,7 +63,7 @@ const Documents = () => {
         type="button"
         onClick={() => setViewMode('list')}
         className={`flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium ${
-          viewMode === 'list' ? 'bg-primary-50 text-primary-700' : 'text-gray-500 hover:bg-gray-50'
+          viewMode === 'list' ? 'bg-primary-600 text-white shadow-sm' : 'text-slate-500 hover:bg-slate-50'
         }`}
       >
         <IoListOutline className="h-4 w-4" /> Show in List
@@ -75,13 +75,13 @@ const Documents = () => {
     <div>
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Documents</h1>
-          <p className="mt-1 text-gray-500">Access official SK documents, resolutions, and reports.</p>
+          <h1 className="page-title">Documents</h1>
+          <p className="page-subtitle">Access official SK documents, resolutions, and reports.</p>
         </div>
         {viewToggle}
       </div>
 
-      <Card className="p-6">
+      <Card className="p-5 sm:p-6">
         {error && (
           <div className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
             {error}

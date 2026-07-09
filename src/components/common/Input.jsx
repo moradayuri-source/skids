@@ -17,20 +17,20 @@ const Input = forwardRef(({
   iconPosition = 'left',
   ...props
 }, ref) => {
-  const baseStyles = 'w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 transition-all duration-200';
+  const baseStyles = 'w-full rounded-lg border bg-white px-3.5 py-2.5 text-sm text-slate-800 shadow-sm outline-none transition-all duration-200 placeholder:text-slate-400 focus:ring-4';
   
   const variantStyles = error
-    ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
+    ? 'border-rose-300 focus:border-rose-400 focus:ring-rose-100'
     : success
-    ? 'border-green-300 focus:ring-green-500 focus:border-green-500'
-    : 'border-gray-300 focus:ring-primary-500 focus:border-primary-500';
+    ? 'border-emerald-300 focus:border-emerald-400 focus:ring-emerald-100'
+    : 'border-slate-200 focus:border-primary-400 focus:ring-primary-100';
 
   const iconStyles = Icon ? (iconPosition === 'left' ? 'pl-10' : 'pr-10') : '';
 
   return (
     <div className="w-full">
       {label && (
-        <label className="block text-sm font-medium text-gray-700 mb-1">
+        <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-600">
           {label}
           {required && <span className="text-red-500 ml-1">*</span>}
         </label>
@@ -53,7 +53,7 @@ const Input = forwardRef(({
             ${baseStyles}
             ${variantStyles}
             ${iconStyles}
-            ${disabled ? 'bg-gray-50 cursor-not-allowed' : ''}
+            ${disabled ? 'cursor-not-allowed bg-slate-50 text-slate-500' : ''}
             ${className}
           `}
           {...props}

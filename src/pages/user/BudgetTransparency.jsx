@@ -57,15 +57,15 @@ const BudgetTransparency = () => {
     <div>
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Budget Transparency</h1>
-          <p className="mt-1 text-gray-500">View SK budget reports and fund allocations.</p>
+          <h1 className="page-title">Budget Transparency</h1>
+          <p className="page-subtitle">View SK budget reports and fund allocations.</p>
         </div>
         <div className="flex rounded-lg border border-gray-200 bg-white p-1">
           <button
             type="button"
             onClick={() => setViewMode('grid')}
             className={`flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium ${
-              viewMode === 'grid' ? 'bg-primary-50 text-primary-700' : 'text-gray-500 hover:bg-gray-50'
+              viewMode === 'grid' ? 'bg-primary-600 text-white shadow-sm' : 'text-slate-500 hover:bg-slate-50'
             }`}
           >
             <IoGridOutline className="h-4 w-4" /> Show in Grid
@@ -74,7 +74,7 @@ const BudgetTransparency = () => {
             type="button"
             onClick={() => setViewMode('list')}
             className={`flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium ${
-              viewMode === 'list' ? 'bg-primary-50 text-primary-700' : 'text-gray-500 hover:bg-gray-50'
+              viewMode === 'list' ? 'bg-primary-600 text-white shadow-sm' : 'text-slate-500 hover:bg-slate-50'
             }`}
           >
             <IoListOutline className="h-4 w-4" /> Show in List

@@ -148,8 +148,8 @@ const UserProfile = () => {
     return (
       <div>
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-900">My Profile</h1>
-          <p className="text-gray-500 mt-1">View and manage your personal information.</p>
+          <h1 className="page-title">My Profile</h1>
+          <p className="page-subtitle">Complete and manage your personal information profile.</p>
         </div>
         <ProfileSkeleton />
       </div>
@@ -159,8 +159,8 @@ const UserProfile = () => {
   return (
     <div>
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">My Profile</h1>
-        <p className="text-gray-500 mt-1">View and manage your personal information.</p>
+        <h1 className="page-title">My Profile</h1>
+        <p className="page-subtitle">Complete and manage your personal information profile.</p>
       </div>
 
       {error && (
@@ -170,10 +170,12 @@ const UserProfile = () => {
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <Card className="lg:col-span-1 p-6 text-center">
+        <Card className="overflow-hidden p-0 text-center lg:col-span-1">
+          <div className="h-20 bg-gradient-to-r from-primary-600 to-indigo-700" />
+          <div className="-mt-12 p-6">
           <div className="flex flex-col items-center">
             <div className="relative mb-4">
-              <div className="w-32 h-32 overflow-hidden rounded-full bg-primary-100 flex items-center justify-center">
+              <div className="flex h-32 w-32 items-center justify-center overflow-hidden rounded-full border-4 border-white bg-primary-100 shadow-lg">
                 {avatarSrc ? (
                   <img src={avatarSrc} alt={profile.name} className="h-full w-full object-cover" />
                 ) : (
@@ -187,18 +189,19 @@ const UserProfile = () => {
                 </label>
               )}
             </div>
-            <h2 className="text-xl font-semibold text-gray-900">{profile.name}</h2>
-            <p className="text-sm text-gray-500">{profile.age || '-'} years old</p>
-            <div className="mt-4 w-full pt-4 border-t border-gray-200">
-              <p className="text-sm text-gray-600">Barangay {profile.barangay}</p>
-              <p className="text-sm text-gray-600">{profile.voterStatus}</p>
+            <h2 className="text-xl font-semibold text-slate-900">{profile.name}</h2>
+            <p className="text-sm text-primary-600">{profile.age || '-'} years old</p>
+            <div className="mt-4 w-full border-t border-slate-100 pt-4">
+              <p className="text-sm text-slate-600">Barangay {profile.barangay}</p>
+              <p className="text-sm text-slate-600">{profile.voterStatus}</p>
             </div>
+          </div>
           </div>
         </Card>
 
         <Card className="lg:col-span-2 p-6">
           <div className="flex items-center justify-between mb-6">
-            <h3 className="text-lg font-semibold text-gray-900">Personal Information</h3>
+            <h3 className="text-base font-semibold text-slate-900">Personal Information</h3>
             {!isEditing ? (
               <div className="flex flex-wrap gap-2">
                 <Button variant="outline" onClick={handleDownloadProfile} disabled={downloading}>
@@ -280,13 +283,13 @@ const UserProfile = () => {
                 icon={IoLocationOutline}
               />
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Gender</label>
+                <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-600">Gender</label>
                 <select
                   name="gender"
                   value={profile.gender}
                   onChange={handleInputChange}
                   disabled={!isEditing}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 disabled:bg-gray-50"
+                  className="w-full rounded-lg border border-slate-200 bg-white px-3.5 py-2.5 text-sm outline-none focus:border-primary-400 focus:ring-4 focus:ring-primary-100 disabled:bg-slate-50"
                 >
                   <option value="">Select gender</option>
                   <option value="Male">Male</option>
@@ -299,13 +302,13 @@ const UserProfile = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Civil Status</label>
+                <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-600">Civil Status</label>
                 <select
                   name="civilStatus"
                   value={profile.civilStatus}
                   onChange={handleInputChange}
                   disabled={!isEditing}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 disabled:bg-gray-50"
+                  className="w-full rounded-lg border border-slate-200 bg-white px-3.5 py-2.5 text-sm outline-none focus:border-primary-400 focus:ring-4 focus:ring-primary-100 disabled:bg-slate-50"
                 >
                   <option value="">Select civil status</option>
                   <option value="Single">Single</option>
@@ -315,13 +318,13 @@ const UserProfile = () => {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Work Status</label>
+                <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-600">Work Status</label>
                 <select
                   name="workStatus"
                   value={profile.workStatus}
                   onChange={handleInputChange}
                   disabled={!isEditing}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 disabled:bg-gray-50"
+                  className="w-full rounded-lg border border-slate-200 bg-white px-3.5 py-2.5 text-sm outline-none focus:border-primary-400 focus:ring-4 focus:ring-primary-100 disabled:bg-slate-50"
                 >
                   <option value="">Select work status</option>
                   <option value="Student">Student</option>

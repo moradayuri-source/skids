@@ -72,8 +72,8 @@ const ManagerManagement = () => {
     <div>
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Manager Accounts</h1>
-          <p className="mt-1 text-gray-500">
+          <h1 className="page-title">Manager Accounts</h1>
+          <p className="page-subtitle">
             Grant operational access. Managers cannot add or remove other managers.
           </p>
         </div>
@@ -88,7 +88,7 @@ const ManagerManagement = () => {
         </div>
       )}
 
-      <Card className="p-6">
+      <Card className="p-5 sm:p-6">
         {loading ? (
           <SkeletonList rows={3} />
         ) : managers.length === 0 ? (

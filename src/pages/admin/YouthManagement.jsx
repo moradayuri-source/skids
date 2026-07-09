@@ -174,17 +174,17 @@ const YouthManagement = () => {
 
   return (
     <div>
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Youth Management</h1>
-          <p className="text-gray-500 mt-1">Manage and organize youth profiles in your barangay.</p>
+          <h1 className="page-title">Youth Information</h1>
+          <p className="page-subtitle">Manage and organize registered youth profiles in your barangay.</p>
         </div>
         <Button onClick={handleAdd} icon={IoAddOutline}>
           Add Youth Member
         </Button>
       </div>
 
-      <Card className="p-6">
+      <Card className="p-5 sm:p-6">
         {error && (
           <div className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
             {error}
@@ -259,12 +259,12 @@ const YouthManagement = () => {
             onChange={handleInputChange}
           />
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Gender</label>
+            <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-600">Gender</label>
             <select
               name="gender"
               value={formData.gender}
               onChange={handleInputChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full rounded-lg border border-slate-200 bg-white px-3.5 py-2.5 text-sm outline-none focus:border-primary-400 focus:ring-4 focus:ring-primary-100"
             >
               <option value="">Select Gender</option>
               <option value="Male">Male</option>
@@ -272,12 +272,12 @@ const YouthManagement = () => {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Civil Status</label>
+            <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-600">Civil Status</label>
             <select
               name="civilStatus"
               value={formData.civilStatus}
               onChange={handleInputChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full rounded-lg border border-slate-200 bg-white px-3.5 py-2.5 text-sm outline-none focus:border-primary-400 focus:ring-4 focus:ring-primary-100"
             >
               <option value="">Select Civil Status</option>
               <option value="Single">Single</option>
@@ -285,12 +285,12 @@ const YouthManagement = () => {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Voter Status</label>
+            <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-600">Voter Status</label>
             <select
               name="voterStatus"
               value={formData.voterStatus}
               onChange={handleInputChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full rounded-lg border border-slate-200 bg-white px-3.5 py-2.5 text-sm outline-none focus:border-primary-400 focus:ring-4 focus:ring-primary-100"
             >
               <option value="">Select Voter Status</option>
               <option value="Registered">Registered</option>
@@ -298,12 +298,12 @@ const YouthManagement = () => {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Work Status</label>
+            <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-600">Work Status</label>
             <select
               name="workStatus"
               value={formData.workStatus}
               onChange={handleInputChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full rounded-lg border border-slate-200 bg-white px-3.5 py-2.5 text-sm outline-none focus:border-primary-400 focus:ring-4 focus:ring-primary-100"
             >
               <option value="">Select Work Status</option>
               <option value="Student">Student</option>
@@ -312,7 +312,7 @@ const YouthManagement = () => {
             </select>
           </div>
         </div>
-        <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-gray-200">
+        <div className="mt-6 flex justify-end gap-3 border-t border-slate-100 pt-4">
           <Button variant="secondary" onClick={() => setIsModalOpen(false)} disabled={saving}>
             Cancel
           </Button>

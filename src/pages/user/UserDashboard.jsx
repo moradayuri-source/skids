@@ -48,10 +48,10 @@ const UserDashboard = () => {
   }, []);
 
   return (
-    <div>
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">Welcome to SKIDS!</h1>
-        <p className="text-gray-500 mt-1">Stay updated with the latest SK announcements, events, and information.</p>
+    <div className="space-y-6">
+      <div>
+        <h1 className="page-title">Welcome to SKIDS!</h1>
+        <p className="page-subtitle">Stay updated with the latest SK announcements, events, and information.</p>
       </div>
 
       {error && (
@@ -60,33 +60,35 @@ const UserDashboard = () => {
         </div>
       )}
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 mb-8">
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-5">
         {quickLinks.map(({ to, label, icon: Icon, color }) => (
           <Link key={to} to={to}>
-            <Card className="h-full p-4 text-center hover:shadow-md transition-shadow">
-              <Icon className={`w-8 h-8 mx-auto mb-2 ${color}`} />
-              <p className="text-sm font-medium text-gray-700">{label}</p>
+            <Card className="group h-full p-5 text-center transition hover:-translate-y-1 hover:shadow-lg">
+              <div className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-xl bg-slate-50 transition group-hover:bg-primary-50">
+                <Icon className={`h-6 w-6 ${color}`} />
+              </div>
+              <p className="text-xs font-semibold text-slate-700">{label}</p>
             </Card>
           </Link>
         ))}
       </div>
 
       {loading ? (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
           <SkeletonList rows={2} />
           <SkeletonList rows={2} />
         </div>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Card title="Latest Announcements" className="p-6">
-            <div className="space-y-4">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+          <Card title="Latest Announcements" icon={IoMegaphoneOutline} className="p-5 sm:p-6">
+            <div className="divide-y divide-slate-100">
               {announcements.length === 0 ? (
                 <p className="text-gray-500 text-center py-4">No announcements available.</p>
               ) : announcements.map((announcement) => (
-                <div key={announcement.id} className="border-b border-gray-100 pb-3 last:border-0 last:pb-0">
-                  <p className="text-sm font-medium text-gray-900">{announcement.title}</p>
-                  <p className="text-sm text-gray-600 line-clamp-2">{announcement.content}</p>
-                  <p className="text-xs text-gray-400 mt-1">
+                <div key={announcement.id} className="py-4 first:pt-0 last:pb-0">
+                  <p className="text-sm font-semibold text-slate-900">{announcement.title}</p>
+                  <p className="mt-1 line-clamp-2 text-sm leading-6 text-slate-600">{announcement.content}</p>
+                  <p className="mt-2 text-xs text-slate-400">
                     {announcement.publishedAt
                       ? new Date(announcement.publishedAt).toLocaleDateString()
                       : ''}
@@ -96,15 +98,15 @@ const UserDashboard = () => {
             </div>
           </Card>
 
-          <Card title="Upcoming Events" className="p-6">
-            <div className="space-y-4">
+          <Card title="Upcoming Events" icon={IoCalendarOutline} className="p-5 sm:p-6">
+            <div className="divide-y divide-slate-100">
               {events.length === 0 ? (
                 <p className="text-gray-500 text-center py-4">No upcoming events.</p>
               ) : events.map((event) => (
-                <div key={event.id} className="border-b border-gray-100 pb-3 last:border-0 last:pb-0">
-                  <p className="text-sm font-medium text-gray-900">{event.title}</p>
+                <div key={event.id} className="py-4 first:pt-0 last:pb-0">
+                  <p className="text-sm font-semibold text-slate-900">{event.title}</p>
                   <p className="text-sm text-gray-600">{String(event.date).slice(0, 10)} • {event.time}</p>
-                  <p className="text-xs text-gray-400">{event.location}</p>
+                  <p className="mt-1 text-xs text-slate-400">{event.location}</p>
                 </div>
               ))}
             </div>
@@ -112,8 +114,8 @@ const UserDashboard = () => {
         </div>
       )}
 
-      <div className="mt-6">
-        <Card title="Budget Transparency" className="p-6">
+      <div>
+        <Card title="Budget Transparency" icon={IoWalletOutline} className="p-5 sm:p-6">
           {loading ? (
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               {Array.from({ length: 3 }, (_, index) => <SkeletonCard key={index} />)}
@@ -123,10 +125,10 @@ const UserDashboard = () => {
               {budgetReports.length === 0 ? (
                 <p className="text-gray-500 text-center sm:col-span-3 py-4">No budget reports available.</p>
               ) : budgetReports.map((report) => (
-                <div key={report.id} className="bg-gray-50 rounded-lg p-4">
-                  <p className="text-sm font-medium text-gray-900">{report.title}</p>
-                  <p className="text-lg font-bold text-primary-600">{report.amount}</p>
-                  <p className="text-xs text-gray-500">{report.category}</p>
+                <div key={report.id} className="rounded-xl border border-slate-100 bg-slate-50/80 p-4">
+                  <p className="text-sm font-semibold text-slate-900">{report.title}</p>
+                  <p className="mt-1 text-lg font-bold text-primary-600">{report.amount}</p>
+                  <p className="mt-1 text-xs text-slate-500">{report.category}</p>
                 </div>
               ))}
             </div>

@@ -1,5 +1,10 @@
 import { useEffect, useState } from 'react';
-import { IoLocationOutline, IoTimeOutline } from 'react-icons/io5';
+import {
+  IoChevronBack,
+  IoChevronForward,
+  IoLocationOutline,
+  IoTimeOutline,
+} from 'react-icons/io5';
 import Card from '../../components/common/Card';
 import { SkeletonList } from '../../components/common/Skeleton';
 import { api } from '../../services/api';
@@ -74,8 +79,9 @@ const EventsCalendar = () => {
   return (
     <div>
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Events Calendar</h1>
-        <p className="text-gray-500 mt-1">View upcoming SK events and activities.</p>
+        <p className="mb-1 text-xs font-medium text-slate-400">Dashboard / Calendar</p>
+        <h1 className="page-title">Event Calendar</h1>
+        <p className="page-subtitle">View upcoming SK events and activities.</p>
       </div>
 
       {error && (
@@ -84,15 +90,15 @@ const EventsCalendar = () => {
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <Card className="lg:col-span-1 p-6">
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1.55fr)_minmax(320px,0.65fr)]">
+        <Card className="p-5 sm:p-6">
           <div className="flex items-center justify-between mb-4">
-            <button type="button" aria-label="Previous month" onClick={prevMonth} className="p-2 rounded-lg hover:bg-gray-100">
-              ←
+            <button type="button" aria-label="Previous month" onClick={prevMonth} className="rounded-lg p-2 text-slate-500 hover:bg-slate-100">
+              <IoChevronBack className="h-5 w-5" />
             </button>
             <h2 className="text-lg font-semibold">{months[selectedMonth]} {selectedYear}</h2>
-            <button type="button" aria-label="Next month" onClick={nextMonth} className="p-2 rounded-lg hover:bg-gray-100">
-              →
+            <button type="button" aria-label="Next month" onClick={nextMonth} className="rounded-lg p-2 text-slate-500 hover:bg-slate-100">
+              <IoChevronForward className="h-5 w-5" />
             </button>
           </div>
 
@@ -111,9 +117,9 @@ const EventsCalendar = () => {
               return (
                 <div
                   key={cellDate}
-                  className={`relative rounded-lg py-2 text-sm ${
-                    hasEvent ? 'bg-sky-100 text-sky-800' : 'text-gray-700 hover:bg-gray-100'
-                  } ${isToday ? 'font-extrabold ring-2 ring-primary-500 ring-inset' : ''}`}
+                  className={`relative flex min-h-12 items-center justify-center rounded-xl border py-2 text-sm sm:min-h-16 ${
+                    hasEvent ? 'border-sky-200 bg-sky-100 text-sky-800' : 'border-slate-100 text-slate-700 hover:bg-slate-50'
+                  } ${isToday ? 'font-extrabold ring-2 ring-primary-500 ring-offset-1' : ''}`}
                   title={hasEvent ? 'Upcoming event' : undefined}
                 >
                   {day}
@@ -126,8 +132,9 @@ const EventsCalendar = () => {
           </div>
         </Card>
 
-        <Card className="lg:col-span-2 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Upcoming Events</h3>
+        <Card className="p-5 sm:p-6">
+          <h3 className="mb-1 text-base font-semibold text-slate-900">Upcoming Events</h3>
+          <p className="mb-4 text-xs text-slate-500">All scheduled events from today onward.</p>
           {loading ? (
             <SkeletonList rows={3} />
           ) : upcomingEvents.length === 0 ? (
@@ -137,7 +144,7 @@ const EventsCalendar = () => {
               {upcomingEvents.map((event) => {
                 const eventDate = new Date(`${dateKey(event.date)}T00:00:00`);
                 return (
-                  <div key={event.id} className="flex items-start gap-4 rounded-lg bg-sky-50 p-4">
+                  <div key={event.id} className="flex items-start gap-4 rounded-xl border border-sky-100 bg-sky-50/70 p-4">
                     <div className="flex-shrink-0 text-center">
                       <div className="rounded-lg bg-sky-100 px-3 py-1">
                         <p className="text-xs font-medium text-sky-700">

@@ -62,8 +62,8 @@ const Navbar = ({
   };
 
   return (
-    <nav className="bg-white border-b border-gray-200 fixed top-0 left-0 right-0 z-50 h-16">
-      <div className="flex items-center justify-between h-full px-4">
+    <nav className="fixed left-0 right-0 top-0 z-50 h-16 border-b border-slate-200/80 bg-white/95 shadow-sm backdrop-blur">
+      <div className="flex h-full items-center justify-between px-4 lg:px-6">
         <div className="flex items-center gap-4">
           <button
             onClick={onToggleSidebar}
@@ -75,7 +75,10 @@ const Navbar = ({
               <IoMenu className="w-6 h-6 text-gray-600" />
             )}
           </button>
-          <h1 className="text-xl font-bold text-primary-600">{title}</h1>
+          <div className="flex items-center gap-2">
+            <img src="/sk.jpg" alt="" className="h-8 w-8 rounded-lg object-cover lg:hidden" />
+            <h1 className="text-lg font-bold tracking-tight text-slate-900">{title}</h1>
+          </div>
         </div>
 
         <div className="flex items-center gap-4">
@@ -85,15 +88,15 @@ const Navbar = ({
               aria-label="Open notifications"
               aria-expanded={isNotificationsOpen}
               onClick={handleNotifications}
-              className={`p-2 rounded-lg transition-colors duration-200 relative ${
-                isNotificationsOpen ? 'bg-primary-50 text-primary-700' : 'hover:bg-gray-100'
+              className={`relative rounded-xl p-2 transition-colors duration-200 ${
+                isNotificationsOpen ? 'bg-primary-50 text-primary-700' : 'text-slate-500 hover:bg-slate-100'
               }`}
             >
               <IoNotificationsOutline className="w-6 h-6" />
             </button>
 
             {isNotificationsOpen && (
-              <div className="absolute right-0 mt-2 w-80 max-w-[calc(100vw-2rem)] overflow-hidden rounded-xl border border-gray-200 bg-white shadow-xl">
+              <div className="absolute right-0 mt-2 w-80 max-w-[calc(100vw-2rem)] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl">
                 <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3">
                   <p className="font-semibold text-gray-900">Notifications</p>
                   <button
@@ -145,9 +148,13 @@ const Navbar = ({
                 setIsDropdownOpen(!isDropdownOpen);
                 setIsNotificationsOpen(false);
               }}
-              className="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-100 transition-colors duration-200"
+              className="flex items-center gap-2 rounded-xl p-1.5 pr-2 transition-colors duration-200 hover:bg-slate-100"
             >
-              <IoPersonCircleOutline className="w-8 h-8 text-gray-600" />
+              {user?.avatar ? (
+                <img src={user.avatar} alt="" className="h-8 w-8 rounded-full object-cover" />
+              ) : (
+                <IoPersonCircleOutline className="h-8 w-8 text-slate-500" />
+              )}
               <span className="hidden md:inline text-sm font-medium text-gray-700">
                 {displayName}
               </span>

@@ -205,8 +205,8 @@ const HistoryLog = () => {
     <div>
       <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Activity Logs</h1>
-          <p className="mt-1 text-gray-500">
+          <h1 className="page-title">Activity Logs</h1>
+          <p className="page-subtitle">
             Review authentication, content changes, and profile updates.
           </p>
         </div>
@@ -221,7 +221,7 @@ const HistoryLog = () => {
         </button>
       </div>
 
-      <Card className="p-6">
+      <Card className="p-5 sm:p-6">
         <div className="mb-6 space-y-4">
           <Input
             placeholder="Search user, action, or details"
