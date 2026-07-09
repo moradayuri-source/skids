@@ -1,11 +1,15 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { IoArrowBackOutline, IoCloudUploadOutline, IoPersonOutline } from 'react-icons/io5';
+import { getYouthPhotoFile, setYouthPhotoFile } from '../../utils/registrationDraft';
 
 const YOUTH_PROFILE_DRAFT_KEY = 'skidsYouthProfileDraft';
 
 const YouthProfileForm = () => {
   const navigate = useNavigate();
+  const fileInputRef = useRef(null);
+  const [photoError, setPhotoError] = useState('');
+  const [photoPreview, setPhotoPreview] = useState('');
   const [formData, setFormData] = useState({
     lastName: '',
     firstName: '',
@@ -17,6 +21,33 @@ const YouthProfileForm = () => {
     barangay: '',
     purok: '',
   });
+
+  useEffect(() => {
+    const existingPhoto = getYouthPhotoFile();
+    if (!existingPhoto) return undefined;
+
+    const previewUrl = URL.createObjectURL(existingPhoto);
+    setPhotoPreview(previewUrl);
+    return () => URL.revokeObjectURL(previewUrl);
+  }, []);
+
+  const selectPhoto = (file) => {
+    setPhotoError('');
+
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      setPhotoError('Please select a PNG or JPG image.');
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setPhotoError('The photo must be 5 MB or smaller.');
+      return;
+    }
+
+    if (photoPreview) URL.revokeObjectURL(photoPreview);
+    setYouthPhotoFile(file);
+    setPhotoPreview(URL.createObjectURL(file));
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -70,11 +101,38 @@ const YouthProfileForm = () => {
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Upload your 2x2 Photo (if available)
               </label>
-              <div className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center hover:border-blue-400 transition-colors cursor-pointer hover:bg-blue-50/50">
-                <IoCloudUploadOutline className="w-10 h-10 text-gray-400 mx-auto mb-2" />
-                <p className="text-sm text-gray-500">Click to upload or drag and drop</p>
-                <p className="text-xs text-gray-400 mt-1">PNG, JPG up to 5MB</p>
-              </div>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/png,image/jpeg"
+                className="sr-only"
+                onChange={(event) => selectPhoto(event.target.files?.[0])}
+              />
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                onDragOver={(event) => event.preventDefault()}
+                onDrop={(event) => {
+                  event.preventDefault();
+                  selectPhoto(event.dataTransfer.files?.[0]);
+                }}
+                className="w-full border-2 border-dashed border-gray-300 rounded-xl p-8 text-center hover:border-blue-400 transition-colors cursor-pointer hover:bg-blue-50/50 focus:outline-none focus:ring-2 focus:ring-blue-400/30"
+              >
+                {photoPreview ? (
+                  <img
+                    src={photoPreview}
+                    alt="Selected 2x2 preview"
+                    className="mx-auto h-28 w-28 rounded-xl object-cover ring-4 ring-blue-100"
+                  />
+                ) : (
+                  <IoCloudUploadOutline className="w-10 h-10 text-gray-400 mx-auto mb-2" />
+                )}
+                <p className="mt-3 text-sm font-medium text-gray-600">
+                  {photoPreview ? 'Change selected photo' : 'Click to upload or drag and drop'}
+                </p>
+                <p className="text-xs text-gray-400 mt-1">PNG or JPG up to 5 MB</p>
+              </button>
+              {photoError && <p className="mt-2 text-sm text-red-600">{photoError}</p>}
             </div>
 
             {/* Name Fields */}

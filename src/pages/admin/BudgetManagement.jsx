@@ -6,13 +6,15 @@ import Button from '../../components/common/Button';
 import Input from '../../components/common/Input';
 import Modal from '../../components/common/Modal';
 import { SkeletonTable } from '../../components/common/Skeleton';
-import { getBudgetReports } from '../../utils/mockData';
+import { api } from '../../services/api';
 
 const BudgetManagement = () => {
   const [budgetData, setBudgetData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedBudget, setSelectedBudget] = useState(null);
+  const [error, setError] = useState('');
+  const [saving, setSaving] = useState(false);
   const [formData, setFormData] = useState({
     title: '',
     amount: '',
@@ -21,14 +23,21 @@ const BudgetManagement = () => {
   });
 
   useEffect(() => {
-    // Future API call: fetchBudgetReports()
-    // axios.get('/api/admin/budget')
-    //   .then(response => setBudgetData(response.data))
-    //   .catch(error => console.error('Error fetching budget data:', error));
-
-    const data = getBudgetReports();
-    setBudgetData(data);
-    setLoading(false);
+    let active = true;
+    api.admin
+      .getBudget()
+      .then((response) => {
+        if (active) setBudgetData(response.data);
+      })
+      .catch((loadError) => {
+        if (active) setError(loadError.response?.data?.message || 'Unable to load budget reports.');
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
   }, []);
 
   const getStatusColor = (status) => {
@@ -84,54 +93,49 @@ const BudgetManagement = () => {
 
   const handleEdit = (budget) => {
     setSelectedBudget(budget);
-    setFormData(budget);
+    setFormData({ ...budget, amount: budget.rawAmount ?? budget.amount });
     setIsModalOpen(true);
   };
 
-  const handleDelete = (id) => {
-    // Future API call: deleteBudgetReport(id)
-    // axios.delete(`/api/admin/budget/${id}`)
-    //   .then(() => {
-    //     setBudgetData(budgetData.filter(b => b.id !== id));
-    //   })
-    //   .catch(error => console.error('Error deleting budget:', error));
-
+  const handleDelete = async (id) => {
     if (window.confirm('Are you sure you want to delete this budget report?')) {
-      setBudgetData(budgetData.filter(b => b.id !== id));
+      try {
+        await api.admin.deleteBudget(id);
+        setBudgetData((current) => current.filter((budget) => budget.id !== id));
+      } catch (deleteError) {
+        setError(deleteError.response?.data?.message || 'Unable to delete budget report.');
+      }
     }
   };
 
-  const handleSubmit = () => {
-    // Future API call: add or update budget report
-    // if (selectedBudget) {
-    //   axios.put(`/api/admin/budget/${selectedBudget.id}`, formData)
-    //     .then(response => {
-    //       setBudgetData(budgetData.map(b => b.id === selectedBudget.id ? response.data : b));
-    //       setIsModalOpen(false);
-    //     })
-    //     .catch(error => console.error('Error updating budget:', error));
-    // } else {
-    //   axios.post('/api/admin/budget', formData)
-    //     .then(response => {
-    //       setBudgetData([...budgetData, response.data]);
-    //       setIsModalOpen(false);
-    //     })
-    //     .catch(error => console.error('Error adding budget:', error));
-    // }
-
-    if (selectedBudget) {
-      setBudgetData(budgetData.map(b => 
-        b.id === selectedBudget.id ? { ...b, ...formData } : b
-      ));
-    } else {
-      const newBudget = {
-        id: budgetData.length + 1,
-        ...formData,
-        date: new Date().toISOString().split('T')[0]
-      };
-      setBudgetData([...budgetData, newBudget]);
+  const handleSubmit = async () => {
+    if (!formData.title || !formData.amount || !formData.category) {
+      setError('Title, amount, and category are required.');
+      return;
     }
-    setIsModalOpen(false);
+    setSaving(true);
+    setError('');
+    try {
+      const payload = {
+        title: formData.title,
+        amount: formData.amount,
+        category: formData.category,
+        status: formData.status,
+      };
+      const response = selectedBudget
+        ? await api.admin.updateBudget(selectedBudget.id, payload)
+        : await api.admin.addBudget(payload);
+      setBudgetData((current) =>
+        selectedBudget
+          ? current.map((budget) => (budget.id === selectedBudget.id ? response.data : budget))
+          : [response.data, ...current]
+      );
+      setIsModalOpen(false);
+    } catch (saveError) {
+      setError(saveError.response?.data?.message || 'Unable to save budget report.');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleInputChange = (e) => {
@@ -154,6 +158,11 @@ const BudgetManagement = () => {
       </div>
 
       <Card className="p-6">
+        {error && (
+          <div className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+            {error}
+          </div>
+        )}
         {loading ? (
           <SkeletonTable rows={5} columns={6} />
         ) : (
@@ -212,11 +221,11 @@ const BudgetManagement = () => {
           </div>
         </div>
         <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-gray-200">
-          <Button variant="secondary" onClick={() => setIsModalOpen(false)}>
+          <Button variant="secondary" onClick={() => setIsModalOpen(false)} disabled={saving}>
             Cancel
           </Button>
-          <Button variant="primary" onClick={handleSubmit}>
-            {selectedBudget ? 'Update' : 'Add'} Budget Report
+          <Button variant="primary" onClick={handleSubmit} disabled={saving}>
+            {saving ? 'Saving…' : `${selectedBudget ? 'Update' : 'Add'} Budget Report`}
           </Button>
         </div>
       </Modal>

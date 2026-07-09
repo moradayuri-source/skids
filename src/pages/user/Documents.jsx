@@ -4,13 +4,13 @@ import Card from '../../components/common/Card';
 import Input from '../../components/common/Input';
 import Button from '../../components/common/Button';
 import { SkeletonGrid } from '../../components/common/Skeleton';
-import { getDocuments } from '../../utils/mockData';
 import { api } from '../../services/api';
 
 const Documents = () => {
   const [documents, setDocuments] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     let isMounted = true;
@@ -21,9 +21,9 @@ const Documents = () => {
         if (isMounted) {
           setDocuments(response.data);
         }
-      } catch {
+      } catch (loadError) {
         if (isMounted) {
-          setDocuments(getDocuments());
+          setError(loadError.response?.data?.message || 'Unable to load documents.');
         }
       } finally {
         if (isMounted) {
@@ -70,6 +70,11 @@ const Documents = () => {
       </div>
 
       <Card className="p-6">
+        {error && (
+          <div className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+            {error}
+          </div>
+        )}
         <div className="mb-6">
           <Input
             placeholder="Search documents..."

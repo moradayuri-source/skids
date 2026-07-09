@@ -21,14 +21,14 @@ const AdminLayout = () => {
         role="admin"
       />
       
-      <div className="flex pt-16">
+      <div className="pt-16">
         <Sidebar 
           isOpen={isSidebarOpen} 
           onClose={() => setIsSidebarOpen(false)}
           role="admin"
         />
         
-        <main className="flex-1 p-6 lg:p-8 min-h-screen">
+        <main className="min-h-[calc(100vh-4rem)] p-6 lg:ml-64 lg:p-8">
           <Outlet />
         </main>
       </div>

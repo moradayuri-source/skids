@@ -27,6 +27,25 @@ const validDate = (value) => {
   return Number.isNaN(date.getTime()) ? null : date;
 };
 
+const assertFutureEventDate = (value) => {
+  const dateText = String(value || '').slice(0, 10);
+  const eventDate = new Date(`${dateText}T00:00:00`);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  if (Number.isNaN(eventDate.getTime())) {
+    const error = new Error('A valid event date is required');
+    error.statusCode = 400;
+    throw error;
+  }
+
+  if (eventDate < today) {
+    const error = new Error('Events cannot be scheduled in the past');
+    error.statusCode = 400;
+    throw error;
+  }
+};
+
 const legacyActionPatterns = {
   login: /^Logged in/i,
   logout: /^Logged out/i,
@@ -74,7 +93,9 @@ const documentResponse = (document) => ({
 router.get(
   '/youth',
   asyncHandler(async (req, res) => {
-    const youth = await YouthProfile.find().sort({ createdAt: -1 });
+    const youth = await YouthProfile.find()
+      .populate('user', 'avatar name email')
+      .sort({ createdAt: -1 });
     res.json(youth);
   })
 );
@@ -237,6 +258,7 @@ router.get(
 router.post(
   '/events',
   asyncHandler(async (req, res) => {
+    assertFutureEventDate(req.body.date);
     const event = await Event.create({
       ...req.body,
       createdBy: req.user._id,
@@ -257,6 +279,10 @@ router.post(
 router.put(
   '/events/:id',
   asyncHandler(async (req, res) => {
+    if (req.body.date) {
+      assertFutureEventDate(req.body.date);
+    }
+
     const event = await Event.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
       runValidators: true,
@@ -381,6 +407,30 @@ router.delete(
     });
 
     res.json({ message: 'Budget report deleted' });
+  })
+);
+
+router.delete(
+  '/messages/:id',
+  asyncHandler(async (req, res) => {
+    const message = await Message.findByIdAndDelete(req.params.id);
+
+    if (!message) {
+      res.status(404);
+      throw new Error('Message not found');
+    }
+
+    await logActivity({
+      req,
+      user: req.user,
+      action: 'Deleted message',
+      actionType: 'delete',
+      resourceType: 'Message',
+      resourceId: message._id,
+      details: message.subject,
+    });
+
+    res.json({ message: 'Message deleted' });
   })
 );
 

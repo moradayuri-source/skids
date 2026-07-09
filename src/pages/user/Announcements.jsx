@@ -1,29 +1,35 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import Card from '../../components/common/Card';
 import { SkeletonList } from '../../components/common/Skeleton';
-import { getAnnouncements } from '../../utils/mockData';
+import { api } from '../../services/api';
 
 const Announcements = () => {
   const [announcements, setAnnouncements] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   useEffect(() => {
-    // Future API call: fetchAnnouncements()
-    // axios.get('/api/announcements')
-    //   .then(response => setAnnouncements(response.data))
-    //   .catch(error => console.error('Error fetching announcements:', error));
-
-    setAnnouncements(getAnnouncements());
-    setLoading(false);
+    let active = true;
+    api.user
+      .getAnnouncements()
+      .then((response) => {
+        if (active) setAnnouncements(response.data);
+      })
+      .catch((loadError) => {
+        if (active) setError(loadError.response?.data?.message || 'Unable to load announcements.');
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
   }, []);
 
-  const getPriorityColor = (priority) => {
-    const colors = {
-      'High': 'bg-red-100 text-red-700',
-      'Medium': 'bg-yellow-100 text-yellow-700',
-      'Low': 'bg-green-100 text-green-700'
-    };
-    return colors[priority] || 'bg-gray-100 text-gray-700';
+  const priorityColor = {
+    High: 'bg-red-100 text-red-700',
+    Medium: 'bg-yellow-100 text-yellow-700',
+    Low: 'bg-green-100 text-green-700',
   };
 
   return (
@@ -34,6 +40,11 @@ const Announcements = () => {
       </div>
 
       <div className="space-y-4">
+        {error && (
+          <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+            {error}
+          </div>
+        )}
         {loading ? (
           <SkeletonList rows={3} />
         ) : announcements.length === 0 ? (
@@ -43,18 +54,18 @@ const Announcements = () => {
         ) : (
           announcements.map((announcement) => (
             <Card key={announcement.id} className="p-6 hover:shadow-md transition-shadow">
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <h3 className="text-lg font-semibold text-gray-900">{announcement.title}</h3>
-                  <p className="text-sm text-gray-600 mt-2">{announcement.content}</p>
-                  <div className="flex items-center gap-3 mt-3">
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${getPriorityColor(announcement.priority)}`}>
-                      {announcement.priority}
-                    </span>
-                    <span className="text-xs text-gray-400">{announcement.date}</span>
-                    <span className="text-xs text-gray-400">• By {announcement.author}</span>
-                  </div>
-                </div>
+              <h3 className="text-lg font-semibold text-gray-900">{announcement.title}</h3>
+              <p className="text-sm text-gray-600 mt-2">{announcement.content}</p>
+              <div className="flex flex-wrap items-center gap-3 mt-3">
+                <span className={`px-2 py-1 rounded-full text-xs font-medium ${priorityColor[announcement.priority] || 'bg-gray-100 text-gray-700'}`}>
+                  {announcement.priority}
+                </span>
+                <span className="text-xs text-gray-400">
+                  {announcement.publishedAt
+                    ? new Date(announcement.publishedAt).toLocaleDateString()
+                    : ''}
+                </span>
+                <span className="text-xs text-gray-400">• By {announcement.authorName}</span>
               </div>
             </Card>
           ))

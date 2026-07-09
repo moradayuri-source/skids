@@ -9,6 +9,7 @@ import {
   IoLogOutOutline
 } from 'react-icons/io5';
 import useAuth from '../../hooks/useAuth';
+import { api } from '../../services/api';
 
 const Navbar = ({ 
   title = 'SKIDS', 
@@ -19,12 +20,38 @@ const Navbar = ({
   role = 'admin'
 }) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+  const [notifications, setNotifications] = useState([]);
+  const [notificationsLoading, setNotificationsLoading] = useState(false);
   const { logout, user } = useAuth();
   const navigate = useNavigate();
   const currentRole = user?.role || role;
   const displayName = user?.name || userName;
   const displayRole = user?.role === 'admin' ? 'Admin' : userRole;
   const profilePath = currentRole === 'admin' ? '/admin/profile' : '/user/profile';
+  const announcementsPath =
+    currentRole === 'admin' ? '/admin/announcements' : '/user/announcements';
+
+  const handleNotifications = async () => {
+    const willOpen = !isNotificationsOpen;
+    setIsNotificationsOpen(willOpen);
+    setIsDropdownOpen(false);
+
+    if (!willOpen) return;
+
+    setNotificationsLoading(true);
+    try {
+      const response =
+        currentRole === 'admin'
+          ? await api.admin.getAnnouncements()
+          : await api.user.getAnnouncements();
+      setNotifications(response.data.slice(0, 5));
+    } catch {
+      setNotifications([]);
+    } finally {
+      setNotificationsLoading(false);
+    }
+  };
 
   const handleLogout = async () => {
     await logout();
@@ -33,7 +60,7 @@ const Navbar = ({
   };
 
   return (
-    <nav className="bg-white border-b border-gray-200 fixed top-0 left-0 right-0 z-30 h-16">
+    <nav className="bg-white border-b border-gray-200 fixed top-0 left-0 right-0 z-50 h-16">
       <div className="flex items-center justify-between h-full px-4">
         <div className="flex items-center gap-4">
           <button
@@ -50,14 +77,72 @@ const Navbar = ({
         </div>
 
         <div className="flex items-center gap-4">
-          <button className="p-2 rounded-lg hover:bg-gray-100 transition-colors duration-200 relative">
-            <IoNotificationsOutline className="w-6 h-6 text-gray-600" />
-            <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-          </button>
+          <div className="relative">
+            <button
+              type="button"
+              aria-label="Open notifications"
+              aria-expanded={isNotificationsOpen}
+              onClick={handleNotifications}
+              className={`p-2 rounded-lg transition-colors duration-200 relative ${
+                isNotificationsOpen ? 'bg-primary-50 text-primary-700' : 'hover:bg-gray-100'
+              }`}
+            >
+              <IoNotificationsOutline className="w-6 h-6" />
+            </button>
+
+            {isNotificationsOpen && (
+              <div className="absolute right-0 mt-2 w-80 max-w-[calc(100vw-2rem)] overflow-hidden rounded-xl border border-gray-200 bg-white shadow-xl">
+                <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3">
+                  <p className="font-semibold text-gray-900">Notifications</p>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsNotificationsOpen(false);
+                      navigate(announcementsPath);
+                    }}
+                    className="text-xs font-medium text-primary-600 hover:text-primary-700"
+                  >
+                    View all
+                  </button>
+                </div>
+                <div className="max-h-80 overflow-y-auto">
+                  {notificationsLoading ? (
+                    <p className="px-4 py-6 text-center text-sm text-gray-500">Loading…</p>
+                  ) : notifications.length === 0 ? (
+                    <p className="px-4 py-6 text-center text-sm text-gray-500">
+                      No announcements yet.
+                    </p>
+                  ) : (
+                    notifications.map((notification) => (
+                      <button
+                        type="button"
+                        key={notification.id}
+                        onClick={() => {
+                          setIsNotificationsOpen(false);
+                          navigate(announcementsPath);
+                        }}
+                        className="block w-full border-b border-gray-100 px-4 py-3 text-left last:border-0 hover:bg-gray-50"
+                      >
+                        <p className="truncate text-sm font-medium text-gray-900">
+                          {notification.title}
+                        </p>
+                        <p className="mt-1 line-clamp-2 text-xs text-gray-500">
+                          {notification.content}
+                        </p>
+                      </button>
+                    ))
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
 
           <div className="relative">
             <button
-              onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+              onClick={() => {
+                setIsDropdownOpen(!isDropdownOpen);
+                setIsNotificationsOpen(false);
+              }}
               className="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-100 transition-colors duration-200"
             >
               <IoPersonCircleOutline className="w-8 h-8 text-gray-600" />

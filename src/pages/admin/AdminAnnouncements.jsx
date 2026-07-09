@@ -6,13 +6,23 @@ import Button from '../../components/common/Button';
 import Input from '../../components/common/Input';
 import Modal from '../../components/common/Modal';
 import { SkeletonTable } from '../../components/common/Skeleton';
-import { getAnnouncements } from '../../utils/mockData';
+import { api } from '../../services/api';
+
+const displayAnnouncement = (announcement) => ({
+  ...announcement,
+  date: announcement.publishedAt
+    ? new Date(announcement.publishedAt).toLocaleDateString()
+    : '',
+  author: announcement.authorName || 'SK Admin',
+});
 
 const AdminAnnouncements = () => {
   const [announcements, setAnnouncements] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedAnnouncement, setSelectedAnnouncement] = useState(null);
+  const [error, setError] = useState('');
+  const [saving, setSaving] = useState(false);
   const [formData, setFormData] = useState({
     title: '',
     content: '',
@@ -20,14 +30,21 @@ const AdminAnnouncements = () => {
   });
 
   useEffect(() => {
-    // Future API call: fetchAnnouncements()
-    // axios.get('/api/admin/announcements')
-    //   .then(response => setAnnouncements(response.data))
-    //   .catch(error => console.error('Error fetching announcements:', error));
-
-    const data = getAnnouncements();
-    setAnnouncements(data);
-    setLoading(false);
+    let active = true;
+    api.admin
+      .getAnnouncements()
+      .then((response) => {
+        if (active) setAnnouncements(response.data.map(displayAnnouncement));
+      })
+      .catch((loadError) => {
+        if (active) setError(loadError.response?.data?.message || 'Unable to load announcements.');
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
   }, []);
 
   const getPriorityColor = (priority) => {
@@ -86,51 +103,46 @@ const AdminAnnouncements = () => {
     setIsModalOpen(true);
   };
 
-  const handleDelete = (id) => {
-    // Future API call: deleteAnnouncement(id)
-    // axios.delete(`/api/admin/announcements/${id}`)
-    //   .then(() => {
-    //     setAnnouncements(announcements.filter(a => a.id !== id));
-    //   })
-    //   .catch(error => console.error('Error deleting announcement:', error));
-
+  const handleDelete = async (id) => {
     if (window.confirm('Are you sure you want to delete this announcement?')) {
-      setAnnouncements(announcements.filter(a => a.id !== id));
+      try {
+        await api.admin.deleteAnnouncement(id);
+        setAnnouncements((current) => current.filter((announcement) => announcement.id !== id));
+      } catch (deleteError) {
+        setError(deleteError.response?.data?.message || 'Unable to delete announcement.');
+      }
     }
   };
 
-  const handleSubmit = () => {
-    // Future API call: add or update announcement
-    // if (selectedAnnouncement) {
-    //   axios.put(`/api/admin/announcements/${selectedAnnouncement.id}`, formData)
-    //     .then(response => {
-    //       setAnnouncements(announcements.map(a => a.id === selectedAnnouncement.id ? response.data : a));
-    //       setIsModalOpen(false);
-    //     })
-    //     .catch(error => console.error('Error updating announcement:', error));
-    // } else {
-    //   axios.post('/api/admin/announcements', formData)
-    //     .then(response => {
-    //       setAnnouncements([response.data, ...announcements]);
-    //       setIsModalOpen(false);
-    //     })
-    //     .catch(error => console.error('Error adding announcement:', error));
-    // }
-
-    if (selectedAnnouncement) {
-      setAnnouncements(announcements.map(a => 
-        a.id === selectedAnnouncement.id ? { ...a, ...formData } : a
-      ));
-    } else {
-      const newAnnouncement = {
-        id: announcements.length + 1,
-        ...formData,
-        date: new Date().toISOString().split('T')[0],
-        author: 'SK Chairwoman'
-      };
-      setAnnouncements([newAnnouncement, ...announcements]);
+  const handleSubmit = async () => {
+    if (!formData.title || !formData.content) {
+      setError('Title and content are required.');
+      return;
     }
-    setIsModalOpen(false);
+    setSaving(true);
+    setError('');
+    try {
+      const payload = {
+        title: formData.title,
+        content: formData.content,
+        priority: formData.priority,
+        status: 'Published',
+      };
+      const response = selectedAnnouncement
+        ? await api.admin.updateAnnouncement(selectedAnnouncement.id, payload)
+        : await api.admin.addAnnouncement(payload);
+      const saved = displayAnnouncement(response.data);
+      setAnnouncements((current) =>
+        selectedAnnouncement
+          ? current.map((item) => (item.id === selectedAnnouncement.id ? saved : item))
+          : [saved, ...current]
+      );
+      setIsModalOpen(false);
+    } catch (saveError) {
+      setError(saveError.response?.data?.message || 'Unable to save announcement.');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleInputChange = (e) => {
@@ -153,6 +165,11 @@ const AdminAnnouncements = () => {
       </div>
 
       <Card className="p-6">
+        {error && (
+          <div className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+            {error}
+          </div>
+        )}
         {loading ? (
           <SkeletonTable rows={5} columns={5} />
         ) : (
@@ -205,11 +222,11 @@ const AdminAnnouncements = () => {
           </div>
         </div>
         <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-gray-200">
-          <Button variant="secondary" onClick={() => setIsModalOpen(false)}>
+          <Button variant="secondary" onClick={() => setIsModalOpen(false)} disabled={saving}>
             Cancel
           </Button>
-          <Button variant="primary" onClick={handleSubmit}>
-            {selectedAnnouncement ? 'Update' : 'Publish'} Announcement
+          <Button variant="primary" onClick={handleSubmit} disabled={saving}>
+            {saving ? 'Saving…' : `${selectedAnnouncement ? 'Update' : 'Publish'} Announcement`}
           </Button>
         </div>
       </Modal>

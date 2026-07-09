@@ -12,6 +12,26 @@ const normalizeApiBaseUrl = (url) => {
 
 const API_BASE_URL = normalizeApiBaseUrl(import.meta.env.VITE_API_URL);
 
+const normalizeMongoIds = (value) => {
+  if (Array.isArray(value)) {
+    return value.map(normalizeMongoIds);
+  }
+
+  if (!value || typeof value !== 'object') {
+    return value;
+  }
+
+  const normalized = Object.fromEntries(
+    Object.entries(value).map(([key, item]) => [key, normalizeMongoIds(item)])
+  );
+
+  if (normalized._id && !normalized.id) {
+    normalized.id = normalized._id;
+  }
+
+  return normalized;
+};
+
 // Create axios instance with default config
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
@@ -38,7 +58,10 @@ apiClient.interceptors.request.use(
 
 // Response interceptor for handling errors
 apiClient.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    response.data = normalizeMongoIds(response.data);
+    return response;
+  },
   (error) => {
     // Handle common errors
     if (error.response?.status === 401) {
@@ -101,6 +124,7 @@ export const api = {
     getMessages: () => apiClient.get('/admin/messages'),
     replyMessage: (id, data) => apiClient.post(`/admin/messages/${id}/reply`, data),
     markMessageRead: (id) => apiClient.put(`/admin/messages/${id}/read`),
+    deleteMessage: (id) => apiClient.delete(`/admin/messages/${id}`),
 
     // History
     getHistory: (params) => apiClient.get('/admin/history', { params }),

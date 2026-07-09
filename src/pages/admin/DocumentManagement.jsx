@@ -6,7 +6,6 @@ import Button from '../../components/common/Button';
 import Input from '../../components/common/Input';
 import Modal from '../../components/common/Modal';
 import { SkeletonTable } from '../../components/common/Skeleton';
-import { getDocuments } from '../../utils/mockData';
 import { api } from '../../services/api';
 import { uploadToCloudinary } from '../../services/upload';
 
@@ -32,9 +31,9 @@ const DocumentManagement = () => {
         if (isMounted) {
           setDocuments(response.data);
         }
-      } catch {
+      } catch (loadError) {
         if (isMounted) {
-          setDocuments(getDocuments());
+          setError(loadError.response?.data?.message || 'Unable to load documents.');
         }
       } finally {
         if (isMounted) {
@@ -69,10 +68,9 @@ const DocumentManagement = () => {
     if (window.confirm('Are you sure you want to delete this document?')) {
       try {
         await api.admin.deleteDocument(id);
-      } catch {
-        // Keeps mock-data delete usable when the backend is not running locally.
-      } finally {
         setDocuments((current) => current.filter((document) => document.id !== id));
+      } catch (deleteError) {
+        setError(deleteError.response?.data?.message || 'Unable to delete document.');
       }
     }
   };

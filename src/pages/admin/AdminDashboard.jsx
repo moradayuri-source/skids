@@ -8,10 +8,7 @@ import {
 } from 'react-icons/io5';
 import Card from '../../components/common/Card';
 import { SkeletonCard, SkeletonList } from '../../components/common/Skeleton';
-import { getDashboardStats } from '../../utils/mockData';
-
-// Placeholder for future API call
-// import { getDashboardStats } from '../../services/api';
+import { api } from '../../services/api';
 
 const StatCard = ({ title, value, icon: Icon, color = 'primary', subtitle }) => {
   const colors = {
@@ -47,24 +44,45 @@ const AdminDashboard = () => {
   });
   const [activities, setActivities] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   useEffect(() => {
-    // Future API call: fetchDashboardStats()
-    // axios.get('/api/admin/dashboard/stats')
-    //   .then(response => setStats(response.data))
-    //   .catch(error => console.error('Error fetching stats:', error));
+    let active = true;
 
-    // Using mock data for now
-    const dashboardStats = getDashboardStats();
-    setStats({
-      totalYouth: dashboardStats.totalYouth,
-      totalAnnouncements: dashboardStats.totalAnnouncements,
-      totalEvents: dashboardStats.totalEvents,
-      totalMessages: dashboardStats.totalMessages,
-      unreadMessages: dashboardStats.unreadMessages
-    });
-    setActivities(dashboardStats.recentActivities);
-    setLoading(false);
+    const loadDashboard = async () => {
+      try {
+        const [youth, announcements, events, messages, history] = await Promise.all([
+          api.admin.getYouth(),
+          api.admin.getAnnouncements(),
+          api.admin.getEvents(),
+          api.admin.getMessages(),
+          api.admin.getHistory({ limit: 5 }),
+        ]);
+        if (!active) return;
+
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        setStats({
+          totalYouth: youth.data.length,
+          totalAnnouncements: announcements.data.length,
+          totalEvents: events.data.filter((event) => new Date(event.date) >= today).length,
+          totalMessages: messages.data.length,
+          unreadMessages: messages.data.filter((message) => message.status === 'unread').length,
+        });
+        setActivities(history.data.logs || []);
+      } catch (loadError) {
+        if (active) {
+          setError(loadError.response?.data?.message || 'Unable to load dashboard data.');
+        }
+      } finally {
+        if (active) setLoading(false);
+      }
+    };
+
+    loadDashboard();
+    return () => {
+      active = false;
+    };
   }, []);
 
   return (
@@ -73,6 +91,11 @@ const AdminDashboard = () => {
         <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
         <p className="text-gray-500 mt-1">Welcome back, SK Chairwoman! Here's what's happening with your SKIDS.</p>
       </div>
+      {error && (
+        <div className="mb-6 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+          {error}
+        </div>
+      )}
 
       {/* Stats Grid */}
       {loading ? (
@@ -127,7 +150,9 @@ const AdminDashboard = () => {
                   <span className="font-medium">{activity.user}</span> {activity.action}
                 </p>
                 <p className="text-sm text-gray-500">{activity.details}</p>
-                <p className="text-xs text-gray-400 mt-1">{activity.date}</p>
+                <p className="text-xs text-gray-400 mt-1">
+                  {new Date(activity.date).toLocaleString()}
+                </p>
               </div>
             </div>
           ))}

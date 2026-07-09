@@ -2,25 +2,33 @@ import { useState, useEffect } from 'react';
 import { IoWalletOutline, IoCheckmarkCircle, IoTimeOutline } from 'react-icons/io5';
 import Card from '../../components/common/Card';
 import { SkeletonCard, SkeletonList } from '../../components/common/Skeleton';
-import { getBudgetReports } from '../../utils/mockData';
+import { api } from '../../services/api';
 
 const BudgetTransparency = () => {
   const [budgetReports, setBudgetReports] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   useEffect(() => {
-    // Future API call: fetchBudgetReports()
-    // axios.get('/api/budget')
-    //   .then(response => setBudgetReports(response.data))
-    //   .catch(error => console.error('Error fetching budget data:', error));
-
-    setBudgetReports(getBudgetReports());
-    setLoading(false);
+    let active = true;
+    api.user
+      .getBudget()
+      .then((response) => {
+        if (active) setBudgetReports(response.data);
+      })
+      .catch((loadError) => {
+        if (active) setError(loadError.response?.data?.message || 'Unable to load budget reports.');
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
   }, []);
 
   const totalBudget = budgetReports.reduce((sum, report) => {
-    const amount = parseFloat(report.amount.replace(/[₱,]/g, ''));
-    return sum + amount;
+    return sum + Number(report.rawAmount || 0);
   }, 0);
 
   const getStatusIcon = (status) => {
@@ -35,6 +43,11 @@ const BudgetTransparency = () => {
         <h1 className="text-2xl font-bold text-gray-900">Budget Transparency</h1>
         <p className="text-gray-500 mt-1">View SK budget reports and fund allocations.</p>
       </div>
+      {error && (
+        <div className="mb-6 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+          {error}
+        </div>
+      )}
 
       {loading ? (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">

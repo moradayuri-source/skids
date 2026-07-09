@@ -269,6 +269,20 @@ router.post(
       }
     );
 
+    if (role === 'user') {
+      const existingYouthProfile = await YouthProfile.exists({ user: user._id });
+      if (!existingYouthProfile) {
+        await YouthProfile.create({
+          user: user._id,
+          name: user.name,
+          email: user.email,
+          barangay: user.barangay || 'Masagui',
+          createdBy: user._id,
+          updatedBy: user._id,
+        });
+      }
+    }
+
     await logActivity({
       req,
       user,

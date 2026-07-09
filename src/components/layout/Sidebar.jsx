@@ -48,15 +48,15 @@ const Sidebar = ({ isOpen, onClose, role = 'admin' }) => {
 
       <aside
         className={`
-          fixed top-0 left-0 h-full bg-white border-r border-gray-200 z-50
+          fixed inset-y-0 left-0 z-[60] h-full bg-white border-r border-gray-200
           transition-transform duration-300 ease-in-out
           w-64
           ${isOpen ? 'translate-x-0' : '-translate-x-full'}
-          lg:translate-x-0 lg:static
+          lg:top-16 lg:z-40 lg:h-[calc(100vh-4rem)] lg:translate-x-0
         `}
       >
         <div className="flex flex-col h-full">
-          <div className="flex items-center justify-center h-16 border-b border-gray-200">
+          <div className="flex items-center justify-center h-16 border-b border-gray-200 lg:hidden">
             <h1 className="text-xl font-bold text-primary-600">SKIDS</h1>
           </div>
 
@@ -65,6 +65,7 @@ const Sidebar = ({ isOpen, onClose, role = 'admin' }) => {
               <NavLink
                 key={item.path}
                 to={item.path}
+                end={item.path === '/admin' || item.path === '/user'}
                 className={({ isActive }) => `
                   flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium
                   transition-all duration-200

@@ -3,6 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { IoArrowBackOutline, IoEyeOffOutline, IoEyeOutline } from 'react-icons/io5';
 import skidsLogo from '../../assets/images/skids.svg';
 import { useAuth } from '../../hooks/useAuth';
+import { api } from '../../services/api';
+import { uploadToCloudinary } from '../../services/upload';
+import { clearYouthPhotoFile, getYouthPhotoFile } from '../../utils/registrationDraft';
 
 const YOUTH_PROFILE_DRAFT_KEY = 'skidsYouthProfileDraft';
 
@@ -53,7 +56,7 @@ const CreateAccountCredentials = () => {
         throw new Error('Please complete your youth profile information first.');
       }
 
-      await register({
+      const registration = await register({
         accountType: 'youth',
         email,
         password,
@@ -65,10 +68,29 @@ const CreateAccountCredentials = () => {
         youthProfile,
       });
 
+      const youthPhoto = getYouthPhotoFile();
+      let photoWarning = '';
+      if (youthPhoto && registration.token) {
+        sessionStorage.setItem('authToken', registration.token);
+        try {
+          const uploadedAvatar = await uploadToCloudinary(youthPhoto, { purpose: 'avatars' });
+          await api.user.updateProfile({
+            avatar: uploadedAvatar.secureUrl,
+            avatarPublicId: uploadedAvatar.publicId,
+            avatarMetadata: uploadedAvatar,
+          });
+        } catch {
+          photoWarning = 'Your account was created, but the photo could not be uploaded. You can add it from your profile.';
+        } finally {
+          sessionStorage.removeItem('authToken');
+        }
+      }
+
       sessionStorage.removeItem(YOUTH_PROFILE_DRAFT_KEY);
+      clearYouthPhotoFile();
       navigate('/account-created', {
         replace: true,
-        state: { accountType: 'youth' },
+        state: { accountType: 'youth', photoWarning },
       });
     } catch (err) {
       setError(err?.response?.data?.message || err.message || 'Failed to create account.');

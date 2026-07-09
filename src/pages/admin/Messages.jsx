@@ -4,7 +4,13 @@ import Card from '../../components/common/Card';
 import Button from '../../components/common/Button';
 import Modal from '../../components/common/Modal';
 import { SkeletonList } from '../../components/common/Skeleton';
-import { getMessages } from '../../utils/mockData';
+import { api } from '../../services/api';
+
+const displayMessage = (message) => ({
+  ...message,
+  sender: message.senderName || 'Youth member',
+  date: message.createdAt ? new Date(message.createdAt).toLocaleString() : '',
+});
 
 const Messages = () => {
   const [messages, setMessages] = useState([]);
@@ -12,60 +18,65 @@ const Messages = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [replyText, setReplyText] = useState('');
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [replying, setReplying] = useState(false);
 
   useEffect(() => {
-    // Future API call: fetchMessages()
-    // axios.get('/api/admin/messages')
-    //   .then(response => setMessages(response.data))
-    //   .catch(error => console.error('Error fetching messages:', error));
-
-    const data = getMessages();
-    setMessages(data);
-    setLoading(false);
+    let active = true;
+    api.admin
+      .getMessages()
+      .then((response) => {
+        if (active) setMessages(response.data.map(displayMessage));
+      })
+      .catch((loadError) => {
+        if (active) setError(loadError.response?.data?.message || 'Unable to load messages.');
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
   }, []);
 
-  const handleViewMessage = (message) => {
+  const handleViewMessage = async (message) => {
     setSelectedMessage(message);
     setIsModalOpen(true);
-    // Mark as read
-    // Future API call: markAsRead(message.id)
-    // axios.put(`/api/admin/messages/${message.id}/read`)
-    //   .then(() => {
-    //     setMessages(messages.map(m => 
-    //       m.id === message.id ? { ...m, status: 'read' } : m
-    //     ));
-    //   })
-    //   .catch(error => console.error('Error marking message as read:', error));
-
-    setMessages((prev) => prev.map((m) => 
-      m.id === message.id ? { ...m, status: 'read' } : m
-    ));
+    if (message.status !== 'unread') return;
+    try {
+      const response = await api.admin.markMessageRead(message.id);
+      const updated = displayMessage(response.data);
+      setMessages((current) => current.map((item) => item.id === message.id ? updated : item));
+      setSelectedMessage(updated);
+    } catch (readError) {
+      setError(readError.response?.data?.message || 'Unable to mark message as read.');
+    }
   };
 
-  const handleReply = () => {
-    // Future API call: sendReply(selectedMessage.id, replyText)
-    // axios.post(`/api/admin/messages/${selectedMessage.id}/reply`, { reply: replyText })
-    //   .then(() => {
-    //     setReplyText('');
-    //     setIsModalOpen(false);
-    //   })
-    //   .catch(error => console.error('Error sending reply:', error));
-
-    alert(`Reply sent to ${selectedMessage.sender}: ${replyText}`);
-    setReplyText('');
-    setIsModalOpen(false);
+  const handleReply = async () => {
+    if (!replyText.trim()) return;
+    setReplying(true);
+    try {
+      const response = await api.admin.replyMessage(selectedMessage.id, { reply: replyText });
+      const updated = displayMessage(response.data);
+      setMessages((current) => current.map((item) => item.id === updated.id ? updated : item));
+      setReplyText('');
+      setIsModalOpen(false);
+    } catch (replyError) {
+      setError(replyError.response?.data?.message || 'Unable to send reply.');
+    } finally {
+      setReplying(false);
+    }
   };
 
-  const handleDelete = (id) => {
-    // Future API call: deleteMessage(id)
-    // axios.delete(`/api/admin/messages/${id}`)
-    //   .then(() => {
-    //     setMessages(messages.filter(m => m.id !== id));
-    //   })
-    //   .catch(error => console.error('Error deleting message:', error));
-
+  const handleDelete = async (id) => {
     if (window.confirm('Are you sure you want to delete this message?')) {
-      setMessages((prev) => prev.filter((m) => m.id !== id));
+      try {
+        await api.admin.deleteMessage(id);
+        setMessages((current) => current.filter((message) => message.id !== id));
+      } catch (deleteError) {
+        setError(deleteError.response?.data?.message || 'Unable to delete message.');
+      }
     }
   };
 
@@ -83,6 +94,11 @@ const Messages = () => {
       </div>
 
       <Card className="p-6">
+        {error && (
+          <div className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+            {error}
+          </div>
+        )}
         {loading ? (
           <SkeletonList rows={4} />
         ) : (
@@ -173,8 +189,8 @@ const Messages = () => {
               <Button variant="secondary" onClick={() => setIsModalOpen(false)}>
                 Close
               </Button>
-              <Button variant="primary" onClick={handleReply} icon={IoPaperPlaneOutline}>
-                Send Reply
+              <Button variant="primary" onClick={handleReply} icon={IoPaperPlaneOutline} disabled={replying}>
+                {replying ? 'Sending…' : 'Send Reply'}
               </Button>
             </div>
           </div>

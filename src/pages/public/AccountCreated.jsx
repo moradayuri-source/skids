@@ -6,6 +6,7 @@ const AccountCreated = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const accountType = location.state?.accountType || 'officer';
+  const photoWarning = location.state?.photoWarning || '';
   const isOfficer = accountType === 'officer';
 
   const handleGoToLogin = () => {
@@ -55,6 +56,11 @@ const AccountCreated = () => {
               Your {isOfficer ? 'SK Officer' : 'youth'} account has been successfully<br />
               registered. You can now log in.
             </p>
+            {photoWarning && (
+              <div className="mt-5 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
+                {photoWarning}
+              </div>
+            )}
           </div>
 
           {/* Go to Login Button */}

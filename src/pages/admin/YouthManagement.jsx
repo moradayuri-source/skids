@@ -6,10 +6,7 @@ import Button from '../../components/common/Button';
 import Input from '../../components/common/Input';
 import Modal from '../../components/common/Modal';
 import { SkeletonTable } from '../../components/common/Skeleton';
-import { getYouthProfiles } from '../../utils/mockData';
-
-// Placeholder for future API calls
-// import { getYouthProfiles, addYouthProfile, updateYouthProfile, deleteYouthProfile } from '../../services/api';
+import { api } from '../../services/api';
 
 const YouthManagement = () => {
   const [youthData, setYouthData] = useState([]);
@@ -17,6 +14,8 @@ const YouthManagement = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedYouth, setSelectedYouth] = useState(null);
+  const [error, setError] = useState('');
+  const [saving, setSaving] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     age: '',
@@ -30,18 +29,45 @@ const YouthManagement = () => {
   });
 
   useEffect(() => {
-    // Future API call: fetchYouthProfiles()
-    // axios.get('/api/admin/youth')
-    //   .then(response => setYouthData(response.data))
-    //   .catch(error => console.error('Error fetching youth data:', error));
+    let active = true;
+    api.admin
+      .getYouth()
+      .then((response) => {
+        if (active) setYouthData(response.data);
+      })
+      .catch((loadError) => {
+        if (active) {
+          setError(loadError.response?.data?.message || 'Unable to load registered youth.');
+        }
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
 
-    const data = getYouthProfiles();
-    setYouthData(data);
-    setLoading(false);
+    return () => {
+      active = false;
+    };
   }, []);
 
   const columns = [
-    { key: 'name', header: 'Name' },
+    {
+      header: 'Name',
+      render: (row) => (
+        <div className="flex items-center gap-3">
+          {row.user?.avatar ? (
+            <img src={row.user.avatar} alt="" className="h-9 w-9 rounded-full object-cover" />
+          ) : (
+            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary-100 text-sm font-semibold text-primary-700">
+              {row.name?.charAt(0)?.toUpperCase() || 'Y'}
+            </div>
+          )}
+          <div>
+            <p className="font-medium text-gray-900">{row.name}</p>
+            {row.user && <p className="text-xs text-green-600">Registered account</p>}
+          </div>
+        </div>
+      ),
+    },
     { key: 'age', header: 'Age' },
     { key: 'barangay', header: 'Barangay' },
     { key: 'contact', header: 'Contact' },
@@ -70,8 +96,8 @@ const YouthManagement = () => {
   ];
 
   const filteredData = youthData.filter(youth =>
-    youth.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    youth.barangay.toLowerCase().includes(searchTerm.toLowerCase())
+    (youth.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (youth.barangay || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const handleAdd = () => {
@@ -96,49 +122,47 @@ const YouthManagement = () => {
     setIsModalOpen(true);
   };
 
-  const handleDelete = (id) => {
-    // Future API call: deleteYouthProfile(id)
-    // axios.delete(`/api/admin/youth/${id}`)
-    //   .then(() => {
-    //     setYouthData(youthData.filter(youth => youth.id !== id));
-    //   })
-    //   .catch(error => console.error('Error deleting youth:', error));
-
+  const handleDelete = async (id) => {
     if (window.confirm('Are you sure you want to delete this youth profile?')) {
-      setYouthData(youthData.filter(youth => youth.id !== id));
+      try {
+        await api.admin.deleteYouth(id);
+        setYouthData((current) => current.filter((youth) => youth.id !== id));
+      } catch (deleteError) {
+        setError(deleteError.response?.data?.message || 'Unable to delete youth profile.');
+      }
     }
   };
 
-  const handleSubmit = () => {
-    // Future API call: add or update youth profile
-    // if (selectedYouth) {
-    //   axios.put(`/api/admin/youth/${selectedYouth.id}`, formData)
-    //     .then(response => {
-    //       setYouthData(youthData.map(y => y.id === selectedYouth.id ? response.data : y));
-    //       setIsModalOpen(false);
-    //     })
-    //     .catch(error => console.error('Error updating youth:', error));
-    // } else {
-    //   axios.post('/api/admin/youth', formData)
-    //     .then(response => {
-    //       setYouthData([...youthData, response.data]);
-    //       setIsModalOpen(false);
-    //     })
-    //     .catch(error => console.error('Error adding youth:', error));
-    // }
-
-    if (selectedYouth) {
-      setYouthData(youthData.map(y => 
-        y.id === selectedYouth.id ? { ...y, ...formData } : y
-      ));
-    } else {
-      const newYouth = {
-        id: youthData.length + 1,
-        ...formData
+  const handleSubmit = async () => {
+    setSaving(true);
+    setError('');
+    try {
+      const payload = {
+        name: formData.name,
+        age: formData.age ? Number(formData.age) : undefined,
+        barangay: formData.barangay,
+        contact: formData.contact,
+        email: formData.email,
+        gender: formData.gender,
+        civilStatus: formData.civilStatus,
+        voterStatus: formData.voterStatus,
+        workStatus: formData.workStatus,
       };
-      setYouthData([...youthData, newYouth]);
+      const response = selectedYouth
+        ? await api.admin.updateYouth(selectedYouth.id, payload)
+        : await api.admin.addYouth(payload);
+
+      setYouthData((current) =>
+        selectedYouth
+          ? current.map((youth) => (youth.id === selectedYouth.id ? response.data : youth))
+          : [response.data, ...current]
+      );
+      setIsModalOpen(false);
+    } catch (saveError) {
+      setError(saveError.response?.data?.message || 'Unable to save youth profile.');
+    } finally {
+      setSaving(false);
     }
-    setIsModalOpen(false);
   };
 
   const handleInputChange = (e) => {
@@ -161,6 +185,11 @@ const YouthManagement = () => {
       </div>
 
       <Card className="p-6">
+        {error && (
+          <div className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+            {error}
+          </div>
+        )}
         <div className="flex flex-col sm:flex-row gap-4 mb-6">
           <div className="flex-1">
             <Input
@@ -284,11 +313,11 @@ const YouthManagement = () => {
           </div>
         </div>
         <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-gray-200">
-          <Button variant="secondary" onClick={() => setIsModalOpen(false)}>
+          <Button variant="secondary" onClick={() => setIsModalOpen(false)} disabled={saving}>
             Cancel
           </Button>
-          <Button variant="primary" onClick={handleSubmit}>
-            {selectedYouth ? 'Update' : 'Add'} Youth Member
+          <Button variant="primary" onClick={handleSubmit} disabled={saving}>
+            {saving ? 'Saving…' : `${selectedYouth ? 'Update' : 'Add'} Youth Member`}
           </Button>
         </div>
       </Modal>
