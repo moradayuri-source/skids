@@ -57,6 +57,113 @@ const drawValueRow = (doc, label, value, x, y, width, height = 10) => {
   doc.text(wrapped.slice(0, 2), x + labelWidth + 4, y + height / 2 - (wrapped.length > 1 ? 1.4 : -1));
 };
 
+const drawDetailCell = (doc, label, value, x, y, width, height = 13) => {
+  doc.setDrawColor(214, 220, 228);
+  doc.setFillColor(249, 251, 253);
+  doc.roundedRect(x, y, width, height, 1.5, 1.5, 'FD');
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(6.8);
+  doc.setTextColor(...GRAY);
+  doc.text(String(label).toUpperCase(), x + 3, y + 4.3);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8);
+  doc.setTextColor(35, 40, 48);
+  const wrapped = doc.splitTextToSize(clean(value), width - 6);
+  doc.text(wrapped.slice(0, 2), x + 3, y + 9);
+};
+
+const drawDetailsPage = (doc, profile, assets) => {
+  doc.addPage([PAGE_WIDTH, PAGE_HEIGHT], 'portrait');
+  const margin = 7;
+  const contentX = 10;
+  const contentWidth = PAGE_WIDTH - 20;
+  const gap = 4;
+  const halfWidth = (contentWidth - gap) / 2;
+
+  doc.setFillColor(255, 255, 255);
+  doc.rect(0, 0, PAGE_WIDTH, PAGE_HEIGHT, 'F');
+  doc.setDrawColor(...NAVY);
+  doc.setLineWidth(0.7);
+  doc.rect(margin, margin, PAGE_WIDTH - margin * 2, PAGE_HEIGHT - margin * 2);
+  doc.setLineWidth(0.2);
+  doc.rect(margin + 1.8, margin + 1.8, PAGE_WIDTH - (margin + 1.8) * 2, PAGE_HEIGHT - (margin + 1.8) * 2);
+
+  if (assets.logoData) {
+    doc.addImage(assets.logoData, imageFormat(assets.logoData), 13, 12, 20, 20, undefined, 'FAST');
+  }
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(...NAVY);
+  doc.setFontSize(15);
+  doc.text('YOUTH PROFILE DETAILS', PAGE_WIDTH / 2, 20, { align: 'center' });
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(...GRAY);
+  doc.setFontSize(7.5);
+  doc.text('Supplementary information provided through the authenticated SKIDS profile', PAGE_WIDTH / 2, 27, { align: 'center' });
+  doc.setDrawColor(...NAVY);
+  doc.setLineWidth(0.6);
+  doc.line(contentX, 36, contentX + contentWidth, 36);
+
+  let y = 43;
+  const drawPairSection = (title, rows) => {
+    drawSectionBar(doc, title, contentX, y, contentWidth);
+    y += 12;
+    rows.forEach(([left, right]) => {
+      drawDetailCell(doc, left[0], left[1], contentX, y, halfWidth);
+      drawDetailCell(doc, right[0], right[1], contentX + halfWidth + gap, y, halfWidth);
+      y += 15;
+    });
+    y += 4;
+  };
+
+  drawPairSection('Personal Information', [
+    [['First Name', profile.firstName], ['Last Name', profile.lastName]],
+    [['Middle Name', profile.middleName], ['Suffix', profile.suffix]],
+    [['Age', profile.age], ['Sex', profile.gender]],
+  ]);
+
+  drawPairSection('Contact Details', [
+    [['Email Address', profile.email], ['Contact Number', profile.contact]],
+  ]);
+
+  drawPairSection('Location Information', [
+    [['Region', profile.region], ['Province', profile.province]],
+    [['Municipality', profile.municipality], ['Barangay', profile.barangay]],
+    [['Purok / Zone', profile.purokZone], ['Complete Address', profile.address]],
+  ]);
+
+  drawPairSection('Demographic Information', [
+    [['Civil Status', profile.civilStatus], ['Work Status', profile.workStatus]],
+    [['Youth Age Group', profile.youthAgeGroup], ['Educational Background', profile.educationalBackground]],
+  ]);
+  drawDetailCell(
+    doc,
+    'Youth Classification',
+    Array.isArray(profile.youthClassifications) && profile.youthClassifications.length
+      ? profile.youthClassifications.join(', ')
+      : '',
+    contentX,
+    y,
+    contentWidth,
+    18
+  );
+  y += 24;
+
+  drawPairSection('Voter and Assembly Information', [
+    [['Registered SK Voter', profile.registeredSkVoter], ['Voted Last SK Election', profile.votedLastSkElection]],
+    [['Registered National Voter', profile.registeredNationalVoter], ['Attended SK Assembly', profile.attendedSkAssembly]],
+    [['Assembly Attendance', profile.assemblyAttendance], ['Existing Voter Status', profile.voterStatus]],
+  ]);
+
+  doc.setDrawColor(...NAVY);
+  doc.setLineWidth(0.5);
+  doc.line(contentX, 328, contentX + contentWidth, 328);
+  doc.setFont('helvetica', 'italic');
+  doc.setFontSize(7);
+  doc.setTextColor(...BLUE);
+  doc.text(`Profile details for ${clean(profile.name, 'SKIDS Youth Member')}`, PAGE_WIDTH / 2, 335, { align: 'center' });
+  doc.text('Page 2 of 2', PAGE_WIDTH / 2, 341, { align: 'center' });
+};
+
 export const createYouthProfilePDF = (profile, assets = {}) => {
   const doc = new jsPDF({
     orientation: 'portrait',
@@ -234,6 +341,8 @@ export const createYouthProfilePDF = (profile, assets = {}) => {
   doc.setTextColor(...BLUE);
   doc.text('SKIDS - Sangguniang Kabataan Information Dissemination System', PAGE_WIDTH / 2, 332, { align: 'center' });
   doc.text('"Serving the Youth, Building the Future."', PAGE_WIDTH / 2, 338, { align: 'center' });
+
+  drawDetailsPage(doc, profile, assets);
 
   return doc;
 };

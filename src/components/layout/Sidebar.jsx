@@ -43,6 +43,7 @@ const Sidebar = ({ isOpen, onClose, role = 'admin' }) => {
   ];
 
   const menuItems = role === 'admin' ? adminMenuItems : userMenuItems;
+  const profilePath = role === 'admin' ? '/admin/profile' : '/user/profile';
   const roleLabel =
     user?.role === 'admin' ? 'SK Chairperson' : user?.role === 'manager' ? 'SK Manager' : 'Youth Member';
   const initials = String(user?.name || 'SK')
@@ -76,7 +77,7 @@ const Sidebar = ({ isOpen, onClose, role = 'admin' }) => {
           transition-transform duration-300 ease-in-out
           w-64
           ${isOpen ? 'translate-x-0' : '-translate-x-full'}
-          lg:top-16 lg:z-40 lg:h-[calc(100vh-4rem)] lg:translate-x-0
+          lg:top-0 lg:z-40 lg:h-screen lg:translate-x-0
         `}
       >
         <div className="flex flex-col h-full">
@@ -88,7 +89,12 @@ const Sidebar = ({ isOpen, onClose, role = 'admin' }) => {
             </div>
           </div>
 
-          <div className="mx-3 mt-4 flex items-center gap-3 rounded-xl bg-white/10 p-3 ring-1 ring-white/10">
+          <NavLink
+            to={profilePath}
+            onClick={() => onClose?.()}
+            className="mx-3 mt-4 flex items-center gap-3 rounded-xl bg-white/10 p-3 ring-1 ring-white/10 transition hover:bg-white/20"
+            aria-label="Open account profile"
+          >
             {user?.avatar ? (
               <img src={user.avatar} alt="" className="h-10 w-10 rounded-full object-cover ring-2 ring-white/20" />
             ) : (
@@ -100,7 +106,7 @@ const Sidebar = ({ isOpen, onClose, role = 'admin' }) => {
               <p className="text-[10px] font-bold uppercase tracking-wider text-blue-200">{roleLabel}</p>
               <p className="truncate text-sm font-semibold text-white">{user?.name || 'SKIDS Member'}</p>
             </div>
-          </div>
+          </NavLink>
 
           <nav className="mt-3 flex-1 space-y-1 overflow-y-auto px-3 pb-4">
             {menuItems.map((item) => (

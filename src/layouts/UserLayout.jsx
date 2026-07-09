@@ -21,14 +21,14 @@ const UserLayout = () => {
         role="user"
       />
       
-      <div className="pt-16">
+      <div className="pt-16 lg:pt-0">
         <Sidebar 
           isOpen={isSidebarOpen} 
           onClose={() => setIsSidebarOpen(false)}
           role="user"
         />
         
-        <main className="min-h-[calc(100vh-4rem)] px-4 py-5 sm:px-6 lg:ml-64 lg:px-8 lg:py-7">
+        <main className="min-h-[calc(100vh-4rem)] px-4 py-5 sm:px-6 lg:ml-64 lg:min-h-screen lg:px-8 lg:py-7">
           <div className="mx-auto w-full max-w-[1500px]"><Outlet /></div>
         </main>
       </div>

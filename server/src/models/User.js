@@ -71,6 +71,26 @@ const userSchema = new mongoose.Schema(
       default: 'Masagui',
     },
     profile: {
+      firstName: {
+        type: String,
+        trim: true,
+        default: '',
+      },
+      middleName: {
+        type: String,
+        trim: true,
+        default: '',
+      },
+      lastName: {
+        type: String,
+        trim: true,
+        default: '',
+      },
+      suffix: {
+        type: String,
+        trim: true,
+        default: '',
+      },
       age: Number,
       gender: {
         type: String,
@@ -83,6 +103,26 @@ const userSchema = new mongoose.Schema(
         default: '',
       },
       address: {
+        type: String,
+        trim: true,
+        default: '',
+      },
+      region: {
+        type: String,
+        trim: true,
+        default: '',
+      },
+      province: {
+        type: String,
+        trim: true,
+        default: '',
+      },
+      municipality: {
+        type: String,
+        trim: true,
+        default: '',
+      },
+      purokZone: {
         type: String,
         trim: true,
         default: '',
@@ -105,6 +145,65 @@ const userSchema = new mongoose.Schema(
       workStatus: {
         type: String,
         enum: ['Student', 'Employed', 'Unemployed', 'Self-employed', ''],
+        default: '',
+      },
+      youthAgeGroup: {
+        type: String,
+        enum: ['15-17', '18-24', '25-30', ''],
+        default: '',
+      },
+      educationalBackground: {
+        type: String,
+        enum: [
+          'Elementary',
+          'Junior High School',
+          'Senior High School',
+          'Vocational',
+          'College',
+          'Postgraduate',
+          'Not in school',
+          '',
+        ],
+        default: '',
+      },
+      youthClassifications: {
+        type: [{
+          type: String,
+          enum: [
+            'In School Youth',
+            'Out of School Youth',
+            'Working Youth',
+            'Person with Disability',
+            'Children in Conflict with Law',
+            'Indigenous People',
+            'Youth with Specific Needs',
+          ],
+        }],
+        default: [],
+      },
+      registeredSkVoter: {
+        type: String,
+        enum: ['Yes', 'No', ''],
+        default: '',
+      },
+      votedLastSkElection: {
+        type: String,
+        enum: ['Yes', 'No', ''],
+        default: '',
+      },
+      registeredNationalVoter: {
+        type: String,
+        enum: ['Yes', 'No', ''],
+        default: '',
+      },
+      attendedSkAssembly: {
+        type: String,
+        enum: ['Yes', 'No', ''],
+        default: '',
+      },
+      assemblyAttendance: {
+        type: String,
+        enum: ['1-2 times', '3-4 times', '5 times & above', ''],
         default: '',
       },
     },

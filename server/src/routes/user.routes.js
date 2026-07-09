@@ -115,7 +115,13 @@ router.get('/user/profile', (req, res) => {
 router.put(
   '/user/profile',
   asyncHandler(async (req, res) => {
-    req.user.name = req.body.name || req.user.name;
+    const firstName = String(req.body.firstName ?? req.user.profile?.firstName ?? '').trim();
+    const middleName = String(req.body.middleName ?? req.user.profile?.middleName ?? '').trim();
+    const lastName = String(req.body.lastName ?? req.user.profile?.lastName ?? '').trim();
+    const suffix = String(req.body.suffix ?? req.user.profile?.suffix ?? '').trim();
+    const composedName = [firstName, middleName, lastName, suffix].filter(Boolean).join(' ');
+
+    req.user.name = composedName || req.body.name || req.user.name;
     req.user.avatar = req.body.avatar || req.user.avatar;
     req.user.avatarPublicId = req.body.avatarPublicId || req.user.avatarPublicId;
     req.user.avatarMetadata = {
@@ -125,13 +131,43 @@ router.put(
     req.user.barangay = req.body.barangay || req.user.barangay;
     req.user.profile = {
       ...req.user.profile,
+      firstName,
+      middleName,
+      lastName,
+      suffix,
       age: req.body.age ?? req.user.profile?.age,
       gender: req.body.gender ?? req.user.profile?.gender,
       contact: req.body.contact ?? req.user.profile?.contact,
       address: req.body.address ?? req.user.profile?.address,
+      region: req.body.region ?? req.user.profile?.region,
+      province: req.body.province ?? req.user.profile?.province,
+      municipality: req.body.municipality ?? req.user.profile?.municipality,
+      purokZone: req.body.purokZone ?? req.user.profile?.purokZone,
       civilStatus: req.body.civilStatus ?? req.user.profile?.civilStatus,
-      voterStatus: req.body.voterStatus ?? req.user.profile?.voterStatus,
+      voterStatus:
+        req.body.registeredSkVoter === 'Yes'
+          ? 'Registered'
+          : req.body.registeredSkVoter === 'No'
+            ? 'Not Registered'
+            : req.body.voterStatus ?? req.user.profile?.voterStatus,
       workStatus: req.body.workStatus ?? req.user.profile?.workStatus,
+      youthAgeGroup: req.body.youthAgeGroup ?? req.user.profile?.youthAgeGroup,
+      educationalBackground:
+        req.body.educationalBackground ?? req.user.profile?.educationalBackground,
+      youthClassifications: Array.isArray(req.body.youthClassifications)
+        ? req.body.youthClassifications
+        : req.user.profile?.youthClassifications || [],
+      registeredSkVoter: req.body.registeredSkVoter ?? req.user.profile?.registeredSkVoter,
+      votedLastSkElection:
+        req.body.votedLastSkElection ?? req.user.profile?.votedLastSkElection,
+      registeredNationalVoter:
+        req.body.registeredNationalVoter ?? req.user.profile?.registeredNationalVoter,
+      attendedSkAssembly:
+        req.body.attendedSkAssembly ?? req.user.profile?.attendedSkAssembly,
+      assemblyAttendance:
+        req.body.attendedSkAssembly === 'No'
+          ? ''
+          : req.body.assemblyAttendance ?? req.user.profile?.assemblyAttendance,
     };
     await req.user.save();
 

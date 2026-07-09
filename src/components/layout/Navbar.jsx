@@ -62,7 +62,7 @@ const Navbar = ({
   };
 
   return (
-    <nav className="fixed left-0 right-0 top-0 z-50 h-16 border-b border-slate-200/80 bg-white/95 shadow-sm backdrop-blur">
+    <nav className="fixed left-0 right-0 top-0 z-50 h-16 border-b border-slate-200/80 bg-white/95 shadow-sm backdrop-blur lg:hidden">
       <div className="flex h-full items-center justify-between px-4 lg:px-6">
         <div className="flex items-center gap-4">
           <button
