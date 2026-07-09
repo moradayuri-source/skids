@@ -1,7 +1,7 @@
 services:
   - type: web
     name: skids-sk-system-api
-    env: node
+    runtime: node
     plan: free
     buildCommand: npm ci
     startCommand: npm run start:server

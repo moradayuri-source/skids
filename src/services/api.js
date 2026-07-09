@@ -15,7 +15,8 @@ const API_BASE_URL = normalizeApiBaseUrl(import.meta.env.VITE_API_URL);
 // Create axios instance with default config
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 10000,
+  // Render Free services can take about a minute to wake after being idle.
+  timeout: 90000,
   headers: {
     'Content-Type': 'application/json',
   },

@@ -34,8 +34,8 @@ const Register = () => {
       return;
     }
 
-    if (password.length < 6) {
-      setError('Password must be at least 6 characters long.');
+    if (password.length < 8) {
+      setError('Password must be at least 8 characters long.');
       return;
     }
 
@@ -49,7 +49,6 @@ const Register = () => {
     try {
       await register({
         accountType: 'officer',
-        role: 'admin',
         firstName,
         middleInitial,
         lastName,
@@ -202,7 +201,7 @@ const Register = () => {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-gray-800 placeholder-gray-400 focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20 transition-all duration-200 pr-12"
-                  placeholder="Min. 6 characters"
+                  placeholder="Min. 8 characters"
                   autoComplete="new-password"
                   required
                 />

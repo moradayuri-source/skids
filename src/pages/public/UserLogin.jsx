@@ -179,11 +179,6 @@ const UserLogin = () => {
             Continue with Google
           </button>
 
-          {/* Demo Account Info */}
-          <div className="rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-700 text-center mt-4">
-            Demo youth account: <span className="font-semibold">user@skids.test</span> / <span className="font-semibold">youth123</span>
-          </div>
-
           {/* Create New Account - In a Container Box */}
           <div className="bg-blue-600 rounded-xl border border-blue-400/30 p-4 text-center hover:bg-blue-700 transition-all duration-200 shadow-md hover:shadow-lg mt-4">
             <Link to="/terms" className="text-sm text-white font-medium transition-colors block hover:text-blue-100">

@@ -15,13 +15,6 @@ import {
 
 const router = express.Router();
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
-const SK_OFFICER_POSITIONS = new Set([
-  'SK Chairperson',
-  'SK Kagawad',
-  'SK Secretary',
-  'SK Treasurer',
-  'SK Auditor',
-]);
 
 const normalizeEmail = (email) => String(email || '').trim().toLowerCase();
 
@@ -47,22 +40,6 @@ const buildName = ({ firstName, middleInitial, middleName, lastName, suffix, nam
     .map(cleanText)
     .filter(Boolean)
     .join(' ');
-};
-
-const resolveRole = ({ body, email }) => {
-  const adminEmails = getAdminEmails();
-  const position = cleanText(body.position || body.profile?.position);
-
-  if (
-    body.role === 'admin' ||
-    body.accountType === 'officer' ||
-    SK_OFFICER_POSITIONS.has(position) ||
-    adminEmails.has(email)
-  ) {
-    return 'admin';
-  }
-
-  return 'user';
 };
 
 const createYouthProfileForUser = async ({ user, body }) => {
@@ -106,9 +83,16 @@ router.post(
       throw new Error('Email is required');
     }
 
-    if (!password || password.length < 6) {
+    if (!password || password.length < 8) {
       res.status(400);
-      throw new Error('Password must be at least 6 characters long');
+      throw new Error('Password must be at least 8 characters long');
+    }
+
+    if (req.body.accountType === 'officer' || getAdminEmails().has(email)) {
+      res.status(403);
+      throw new Error(
+        'SK officer accounts must use Google sign-in with an authorized email'
+      );
     }
 
     const existingUser = await User.findOne({ email }).select('+passwordHash');
@@ -125,7 +109,9 @@ router.post(
       throw new Error('Name is required');
     }
 
-    const role = resolveRole({ body: req.body, email });
+    // Public password registration always creates a youth account. Officer
+    // privileges require Google to verify ownership of an ADMIN_EMAILS address.
+    const role = 'user';
     const passwordHash = await hashPassword(password);
     const profile = req.body.profile || req.body.youthProfile || {};
 

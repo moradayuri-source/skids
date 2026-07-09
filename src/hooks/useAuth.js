@@ -12,59 +12,6 @@ import { api } from '../services/api';
 const TOKEN_KEY = 'authToken';
 const AuthContext = createContext(null);
 
-const DEMO_ACCOUNTS = {
-  'admin@skids.test': {
-    email: 'admin@skids.test',
-    password: 'admin123',
-    role: 'admin',
-    name: 'Admin Demo',
-  },
-  'user@skids.test': {
-    email: 'user@skids.test',
-    password: 'youth123',
-    role: 'user',
-    name: 'Youth Demo',
-  },
-};
-
-const getDemoUser = (email, password) => {
-  const normalizedEmail = String(email || '').trim().toLowerCase();
-  const account = DEMO_ACCOUNTS[normalizedEmail];
-
-  if (!account || String(password || '') !== account.password) {
-    return null;
-  }
-
-  return {
-    id: account.role === 'admin' ? 'demo-admin' : 'demo-user',
-    email: account.email,
-    role: account.role,
-    name: account.name,
-  };
-};
-
-const getDemoUserFromToken = (token) => {
-  if (token === 'demo-token-admin') {
-    return {
-      id: 'demo-admin',
-      email: 'admin@skids.test',
-      role: 'admin',
-      name: 'Admin Demo',
-    };
-  }
-
-  if (token === 'demo-token-user') {
-    return {
-      id: 'demo-user',
-      email: 'user@skids.test',
-      role: 'user',
-      name: 'Youth Demo',
-    };
-  }
-
-  return null;
-};
-
 const getStoredToken = () => localStorage.getItem(TOKEN_KEY) || sessionStorage.getItem(TOKEN_KEY);
 
 const storeToken = (token, remember = true) => {
@@ -91,13 +38,6 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const token = getStoredToken();
     if (!token) {
-      setLoading(false);
-      return undefined;
-    }
-
-    const demoUser = getDemoUserFromToken(token);
-    if (demoUser) {
-      setUser(demoUser);
       setLoading(false);
       return undefined;
     }
@@ -137,15 +77,6 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const login = useCallback(async ({ email, password, remember = true }) => {
-    const demoUser = getDemoUser(email, password);
-
-    if (demoUser) {
-      const token = demoUser.role === 'admin' ? 'demo-token-admin' : 'demo-token-user';
-      storeToken(token, remember);
-      setUser(demoUser);
-      return { token, user: demoUser };
-    }
-
     const response = await api.auth.login({ email, password });
     storeToken(response.data.token, remember);
     setUser(response.data.user);

@@ -91,8 +91,8 @@ const UserBasicProfile = () => {
       return;
     }
 
-    if (passwordData.newPassword.length < 6) {
-      setErrorMessage('New password must be at least 6 characters.');
+    if (passwordData.newPassword.length < 8) {
+      setErrorMessage('New password must be at least 8 characters.');
       return;
     }
 

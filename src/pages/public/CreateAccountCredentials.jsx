@@ -34,8 +34,8 @@ const CreateAccountCredentials = () => {
       return;
     }
 
-    if (password.length < 6) {
-      setError('Password must be at least 6 characters long.');
+    if (password.length < 8) {
+      setError('Password must be at least 8 characters long.');
       return;
     }
 
@@ -55,7 +55,6 @@ const CreateAccountCredentials = () => {
 
       await register({
         accountType: 'youth',
-        role: 'user',
         email,
         password,
         firstName: youthProfile.firstName,

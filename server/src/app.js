@@ -11,6 +11,9 @@ import { errorHandler, notFoundHandler } from './middleware/errorHandler.js';
 
 const app = express();
 
+// Render terminates TLS at its proxy and forwards the original client details.
+app.set('trust proxy', 1);
+
 const parseOrigins = () => {
   const configuredOrigins = process.env.CORS_ORIGINS || process.env.CLIENT_URL || '';
   const origins = configuredOrigins

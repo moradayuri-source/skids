@@ -75,10 +75,6 @@ const OfficerLogin = () => {
               </div>
             )}
 
-            <div className="rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-700">
-              Demo admin account: <span className="font-semibold">admin@skids.test</span> / <span className="font-semibold">admin123</span>
-            </div>
-
             {/* Email Field */}
             <div>
               <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">
@@ -130,8 +126,8 @@ const OfficerLogin = () => {
 
           {/* Footer Links */}
           <div className="mt-6 text-center">
-            <Link to="/register" className="text-sm text-blue-600 hover:text-blue-700 font-medium transition-colors">
-              Create SK Officer Account
+            <Link to="/google-login" className="text-sm text-blue-600 hover:text-blue-700 font-medium transition-colors">
+              Continue with authorized Google account
             </Link>
           </div>
 

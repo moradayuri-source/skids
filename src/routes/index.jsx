@@ -7,7 +7,6 @@ import UserLogin from '../pages/public/UserLogin';
 import OfficerLogin from '../pages/public/OfficerLogin';
 import ForgotPassword from '../pages/public/ForgotPassword';
 import TermsAndCondition from '../pages/public/TermsAndCondition';
-import Register from '../pages/public/Register';
 import CreateAccountCredentials from '../pages/public/CreateAccountCredentials';
 import AccountCreated from '../pages/public/AccountCreated';
 import YouthProfileForm from '../pages/public/YouthProfileForm';
@@ -122,7 +121,7 @@ const AppRoutes = () => {
       />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/terms" element={<TermsAndCondition />} />
-      <Route path="/register" element={<Register />} />
+      <Route path="/register" element={<Navigate to="/officer-login" replace />} />
       <Route path="/create-account" element={<CreateAccountCredentials />} />
       <Route path="/create-credentials" element={<Navigate to="/create-account" replace />} />
       <Route path="/account-created" element={<AccountCreated />} />
