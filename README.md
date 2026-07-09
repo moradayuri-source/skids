@@ -28,6 +28,9 @@ JWT_SECRET=replace-with-a-long-random-secret
 JWT_EXPIRES_IN=7d
 GOOGLE_CLIENT_ID=YOUR_WEB_CLIENT_ID.apps.googleusercontent.com
 ADMIN_EMAILS=chairperson@example.com
+# Optional one-time chairperson password setup; remove after it succeeds.
+ADMIN_BOOTSTRAP_PASSWORD=use-a-unique-password-with-at-least-12-characters
+ADMIN_BOOTSTRAP_NAME=SK Chairperson
 CLOUDINARY_CLOUD_NAME=...
 CLOUDINARY_API_KEY=...
 CLOUDINARY_API_SECRET=...
@@ -56,7 +59,8 @@ The frontend defaults to `http://localhost:5173`; the API defaults to
 
 - Public password registration always creates a youth account.
 - The chairperson signs in with the Google email listed in `ADMIN_EMAILS` and
-  receives the `admin` role.
+  receives the `admin` role. The first email in this variable is also the
+  password-bootstrap account.
 - The chairperson can add or remove `manager` access from **Manager Accounts**.
   Managers can operate all admin modules except manager administration.
 - The backend verifies the Google ID token before granting either privileged
@@ -66,6 +70,18 @@ The frontend defaults to `http://localhost:5173`; the API defaults to
   frontend.
 - Existing password-based officer accounts can still log in, but new officer
   accounts should use Google so email ownership is verified.
+
+### One-time chairperson password setup
+
+For the first Render deployment, set `ADMIN_BOOTSTRAP_PASSWORD` to a unique
+password with at least 12 characters. At startup, the API hashes it with scrypt
+and stores only the hash in MongoDB for the first email in `ADMIN_EMAILS`.
+The password does not overwrite an existing chairperson password.
+
+After the Render log says `Chairperson password bootstrapped`, verify that the
+chairperson can sign in, delete `ADMIN_BOOTSTRAP_PASSWORD` from Render, and
+redeploy. The stored hash remains in MongoDB. Never put the password in
+`render.yaml`, `.env.example`, Vercel, Git, or a screenshot.
 
 Youth account flow:
 
@@ -202,6 +218,8 @@ GOOGLE_CLIENT_ID=YOUR_WEB_CLIENT_ID.apps.googleusercontent.com
 CORS_ORIGINS=https://your-project.vercel.app
 CLIENT_URL=https://your-project.vercel.app
 ADMIN_EMAILS=chairperson@example.com
+ADMIN_BOOTSTRAP_PASSWORD=use-a-unique-password-with-at-least-12-characters
+ADMIN_BOOTSTRAP_NAME=SK Chairperson
 CLOUDINARY_CLOUD_NAME=...
 CLOUDINARY_API_KEY=...
 CLOUDINARY_API_SECRET=...
@@ -211,6 +229,8 @@ CLOUDINARY_UPLOAD_FOLDER=skids
 Important:
 
 - Do not define `PORT`; Render provides it.
+- `ADMIN_BOOTSTRAP_PASSWORD` is a temporary secret for the first successful
+  startup only. Remove it from Render after confirming chairperson login.
 - `CORS_ORIGINS` accepts comma-separated exact origins.
 - If both `CORS_ORIGINS` and `CLIENT_URL` exist, `CORS_ORIGINS` takes
   precedence.

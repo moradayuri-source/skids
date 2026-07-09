@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import app from './src/app.js';
 import connectDB from './src/config/db.js';
+import { bootstrapAdminPassword } from './src/utils/bootstrapAdmin.js';
 
 const PORT = process.env.PORT || 5000;
 
@@ -33,6 +34,7 @@ const startServer = async () => {
   try {
     validateEnvironment();
     await connectDB(process.env.MONGODB_URI);
+    await bootstrapAdminPassword();
 
     app.listen(PORT, () => {
       console.log(`SKIDS API listening on port ${PORT}`);
