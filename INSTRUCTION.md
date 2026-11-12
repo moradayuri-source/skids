@@ -27,7 +27,7 @@ SUPABASE_SECRET_KEY=YOUR_BACKEND_SECRET_KEY
 Use your actual values from Supabase. No `DATABASE_URL`, database password,
 pooler host, or PostgreSQL driver configuration is required.
 
-Install Node.js 22.12 or newer with npm, and open a terminal in the
+Install Node.js 24 with npm, and open a terminal in the
 repository root. Windows examples use `npm.cmd` to avoid PowerShell script-policy
 issues.
 
@@ -280,6 +280,25 @@ The repository's `vercel.json` handles Vite builds and SPA route refreshes.
 
 ## 8. Host the API on Render
 
+### Recommended: deploy the Blueprint
+
+Open [Deploy SKIDS to Render](https://render.com/deploy?repo=https%3A%2F%2Fgithub.com%2Fmoradayuri-source%2Fskids)
+after the latest `render.yaml` is pushed to `main`. Review the Free Node web
+service in Singapore and enter the Supabase, Google, Cloudinary, and
+`CORS_ORIGINS` values listed in the README's Deployment section. Render generates
+the JWT secret and uses `masaguisi.skids@gmail.com` as the chairperson email.
+Use the existing Supabase project to retain its admin account and password.
+If the frontend is not deployed yet, temporarily use `http://localhost:5173`
+for `CORS_ORIGINS`, then replace it with the Vercel origin before frontend use.
+
+Deploy the Blueprint and wait for the service to become live. Copy its actual
+public URL, check `/api/health`, and continue to step 9. Each later push to
+`main` automatically deploys the API again. Existing Blueprint services need
+new secret variables added manually in Render; `sync: false` prompts appear
+only during initial creation.
+
+### Alternative: create the web service manually
+
 1. Make sure the production Supabase project has the setup SQL installed and
    its Data API enabled.
 2. In Render, choose **New > Web Service** and connect the repository.
@@ -289,7 +308,7 @@ The repository's `vercel.json` handles Vite builds and SPA route refreshes.
 | --- | --- |
 | Runtime | Node |
 | Root directory | Repository root; leave subdirectory empty |
-| Build command | `npm ci` |
+| Build command | `npm ci --omit=dev` |
 | Start command | `npm run start:server` |
 | Health check | `/api/health` |
 
@@ -306,8 +325,8 @@ SUPABASE_SECRET_KEY=YOUR_BACKEND_SECRET_KEY
 JWT_SECRET=YOUR_PRODUCTION_RANDOM_SECRET_AT_LEAST_32_CHARACTERS
 JWT_EXPIRES_IN=7d
 GOOGLE_CLIENT_ID=YOUR_WEB_CLIENT_ID.apps.googleusercontent.com
-ADMIN_EMAILS=YOUR_CHAIRPERSON_GOOGLE_EMAIL
-ADMIN_BOOTSTRAP_NAME=SK Chairperson
+ADMIN_EMAILS=masaguisi.skids@gmail.com
+ADMIN_BOOTSTRAP_NAME=SK Masaguisi
 
 CORS_ORIGINS=https://YOUR-ACTUAL-FRONTEND.vercel.app
 CLIENT_URL=https://YOUR-ACTUAL-FRONTEND.vercel.app

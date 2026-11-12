@@ -34,7 +34,7 @@ other Google accounts youth access.
 
 ### 1. Install dependencies
 
-Use Node.js 22.12 or newer and run commands in the repository root:
+Use Node.js 24 and run commands in the repository root:
 
 ```bash
 npm ci
@@ -178,10 +178,46 @@ metadata. Configure PDF/ZIP delivery in Cloudinary if uploaded PDFs cannot open.
 
 ## Deployment
 
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https%3A%2F%2Fgithub.com%2Fmoradayuri-source%2Fskids)
+
+The button deploys the Express API from `main` using [render.yaml](render.yaml).
+It selects the Free plan in Singapore, uses Node.js 24, generates `JWT_SECRET`,
+and sets the chairperson email to `masaguisi.skids@gmail.com`. Future pushes to
+`main` automatically redeploy the API. The React frontend stays on Vercel.
+
+During Blueprint setup, fill in these seven values from your service accounts:
+
+| Variable | Value |
+| --- | --- |
+| `SUPABASE_URL` | Existing Supabase project's HTTPS URL |
+| `SUPABASE_SECRET_KEY` | Backend secret key, kept in Render only |
+| `GOOGLE_CLIENT_ID` | Web client ID shared with the frontend |
+| `CORS_ORIGINS` | Exact Vercel production origin, without a path or trailing slash |
+| `CLOUDINARY_CLOUD_NAME` | Cloudinary cloud name |
+| `CLOUDINARY_API_KEY` | Cloudinary API key |
+| `CLOUDINARY_API_SECRET` | Cloudinary API secret |
+
+If the frontend is not deployed yet, use `http://localhost:5173` for
+`CORS_ORIGINS` temporarily. The API can start and pass its health check; replace
+that value with the exact Vercel origin when the frontend is online.
+
+Use the same Supabase project that already contains the application schema and
+admin account. When starting with a new project, install the SQL first and use
+the optional password bootstrap described above. The Blueprint does not prompt
+for a bootstrap password or store an admin password in Git.
+
+After Render reports the service is live, open its `/api/health` endpoint, then
+set Vercel's `VITE_API_URL` to the actual Render URL plus `/api` and redeploy the
+frontend. Add the exact Vercel origin to the Google Web client's authorized
+JavaScript origins. Free Render services sleep after 15 idle minutes; the next
+request can take about a minute to wake the API.
+
+For manual service creation instead of the Blueprint:
+
 1. Install `server/supabase/setup.sql` in the production Supabase project.
 2. Deploy the Vite frontend to Vercel and save its stable production origin.
 3. Create the Render Node web service using the repository root:
-   - Build: `npm ci`
+   - Build: `npm ci --omit=dev`
    - Start: `npm run start:server`
    - Health check: `/api/health`
 4. In Render, set `NODE_ENV=production`, `SUPABASE_URL`,

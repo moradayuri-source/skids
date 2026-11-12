@@ -1,12 +1,20 @@
+# yaml-language-server: $schema=https://render.com/schema/render.yaml.json
+# Backend only. Deploy the React frontend separately on Vercel.
 services:
   - type: web
     name: skids-sk-system-api
     runtime: node
     plan: free
-    buildCommand: npm ci
+    region: singapore
+    repo: https://github.com/moradayuri-source/skids
+    branch: main
+    autoDeployTrigger: commit
+    buildCommand: npm ci --omit=dev
     startCommand: npm run start:server
     healthCheckPath: /api/health
     envVars:
+      - key: NODE_VERSION
+        value: "24"
       - key: NODE_ENV
         value: production
       - key: SUPABASE_URL
@@ -14,21 +22,18 @@ services:
       - key: SUPABASE_SECRET_KEY
         sync: false
       - key: JWT_SECRET
-        sync: false
+        generateValue: true
       - key: JWT_EXPIRES_IN
         value: 7d
       - key: GOOGLE_CLIENT_ID
         sync: false
-      - key: CLIENT_URL
-        sync: false
+      # Exact Vercel origin, for example https://your-project.vercel.app.
       - key: CORS_ORIGINS
         sync: false
       - key: ADMIN_EMAILS
-        sync: false
-      - key: ADMIN_BOOTSTRAP_PASSWORD
-        sync: false
+        value: masaguisi.skids@gmail.com
       - key: ADMIN_BOOTSTRAP_NAME
-        value: skids.admin@gmail.com
+        value: SK Masaguisi
       - key: CLOUDINARY_CLOUD_NAME
         sync: false
       - key: CLOUDINARY_API_KEY
