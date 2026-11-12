@@ -12,9 +12,9 @@ const normalizeApiBaseUrl = (url) => {
 
 const API_BASE_URL = normalizeApiBaseUrl(import.meta.env.VITE_API_URL);
 
-const normalizeMongoIds = (value) => {
+const normalizeIds = (value) => {
   if (Array.isArray(value)) {
-    return value.map(normalizeMongoIds);
+    return value.map(normalizeIds);
   }
 
   if (!value || typeof value !== 'object') {
@@ -22,7 +22,7 @@ const normalizeMongoIds = (value) => {
   }
 
   const normalized = Object.fromEntries(
-    Object.entries(value).map(([key, item]) => [key, normalizeMongoIds(item)])
+    Object.entries(value).map(([key, item]) => [key, normalizeIds(item)])
   );
 
   if (normalized._id && !normalized.id) {
@@ -59,7 +59,7 @@ apiClient.interceptors.request.use(
 // Response interceptor for handling errors
 apiClient.interceptors.response.use(
   (response) => {
-    response.data = normalizeMongoIds(response.data);
+    response.data = normalizeIds(response.data);
     return response;
   },
   (error) => {

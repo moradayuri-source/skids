@@ -1,75 +1,17 @@
-import mongoose from 'mongoose';
+import { defineRepository } from './repository.js';
 
-const youthProfileSchema = new mongoose.Schema(
-  {
-    user: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
-      default: null,
-      index: true,
-    },
-    name: {
-      type: String,
-      required: true,
-      trim: true,
-    },
-    age: {
-      type: Number,
-      min: 15,
-      max: 30,
-    },
-    barangay: {
-      type: String,
-      required: true,
-      trim: true,
-      default: 'Masagui',
-    },
-    contact: {
-      type: String,
-      trim: true,
-      default: '',
-    },
-    email: {
-      type: String,
-      lowercase: true,
-      trim: true,
-      default: '',
-      index: true,
-    },
-    gender: {
-      type: String,
-      enum: ['Male', 'Female', 'Other', 'Prefer not to say', ''],
-      default: '',
-    },
-    civilStatus: {
-      type: String,
-      enum: ['Single', 'Married', 'Widowed', 'Separated', ''],
-      default: '',
-    },
-    voterStatus: {
-      type: String,
-      enum: ['Registered', 'Not Registered', ''],
-      default: '',
-    },
-    workStatus: {
-      type: String,
-      enum: ['Student', 'Employed', 'Unemployed', 'Self-employed', ''],
-      default: '',
-    },
-    createdBy: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
-    },
-    updatedBy: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
-    },
+export default defineRepository('youth_profiles', [
+  'userId', 'name', 'age', 'barangay', 'contact', 'email', 'gender',
+  'civilStatus', 'voterStatus', 'workStatus', 'createdBy', 'updatedBy',
+], {
+  relation: 'user:users!youth_profiles_userId_fkey(_id,avatar,name,email)',
+  normalize(values) {
+    if (values.email !== undefined) values.email = String(values.email).toLowerCase();
+    return values;
   },
-  { timestamps: true }
-);
-
-youthProfileSchema.index({ name: 'text', barangay: 'text', email: 'text' });
-
-const YouthProfile = mongoose.model('YouthProfile', youthProfileSchema);
-
-export default YouthProfile;
+  hydrate(record) {
+    record.user = record.user ?? record.userId ?? null;
+    delete record.userId;
+    return record;
+  },
+});

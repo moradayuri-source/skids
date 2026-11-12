@@ -5,13 +5,8 @@ export const notFoundHandler = (req, res, next) => {
 };
 
 export const errorHandler = (error, req, res, next) => {
-  if (res.headersSent) {
-    next(error);
-    return;
-  }
-
-  const statusCode = error.statusCode || 500;
-
+  if (res.headersSent) { next(error); return; }
+  const statusCode = error.statusCode || (res.statusCode >= 400 ? res.statusCode : 500);
   res.status(statusCode).json({
     message: error.message || 'Server error',
     ...(process.env.NODE_ENV !== 'production' && { stack: error.stack }),

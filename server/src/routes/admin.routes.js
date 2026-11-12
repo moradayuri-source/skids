@@ -1,4 +1,6 @@
 import express from 'express';
+import { callRpc } from '../config/db.js';
+import { updateById, deleteById } from '../utils/records.js';
 import Announcement from '../models/Announcement.js';
 import ActivityLog from '../models/ActivityLog.js';
 import BudgetReport from '../models/BudgetReport.js';
@@ -16,7 +18,6 @@ const router = express.Router();
 
 router.use(requireAuth);
 
-const escapeRegExp = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 const positiveInteger = (value, fallback, maximum) => {
   const parsed = Number.parseInt(value, 10);
@@ -45,15 +46,6 @@ const assertFutureEventDate = (value) => {
     error.statusCode = 400;
     throw error;
   }
-};
-
-const legacyActionPatterns = {
-  login: /^Logged in/i,
-  logout: /^Logged out/i,
-  create: /^(Created|Posted|Uploaded|Sent|Replied|Registered)/i,
-  update: /^(Updated|Edited|Marked)/i,
-  delete: /^(Deleted|Removed)/i,
-  profile_update: /^Updated (admin|user) profile/i,
 };
 
 const parseAmount = (amount) => {
@@ -99,7 +91,7 @@ router.get(
   '/managers',
   authorize('admin'),
   asyncHandler(async (req, res) => {
-    const managers = await User.find({ role: 'manager' }).sort({ createdAt: -1 });
+    const managers = await User.findAll({ where: { role: 'manager' }, order: [['createdAt', 'DESC']] });
     res.json(managers.map(publicUser));
   })
 );
@@ -116,7 +108,7 @@ router.post(
       throw new Error('Manager name and email are required');
     }
 
-    let manager = await User.findOne({ email });
+    let manager = await User.findOne({ where: { email } });
     if (manager?.role === 'admin' || getAdminEmails().has(email)) {
       res.status(409);
       throw new Error('The chairperson account cannot be changed into a manager');
@@ -136,7 +128,7 @@ router.post(
       manager.role = 'manager';
       manager.isActive = true;
       manager.status = 'active';
-      await manager.save();
+      await User.updateById(manager._id, manager);
     }
 
     await logActivity({
@@ -157,27 +149,16 @@ router.delete(
   '/managers/:id',
   authorize('admin'),
   asyncHandler(async (req, res) => {
-    const manager = await User.findOne({ _id: req.params.id, role: 'manager' });
+    const manager = await User.findOne({ where: { _id: req.params.id, role: 'manager' } });
 
     if (!manager) {
       res.status(404);
       throw new Error('Manager account not found');
     }
 
-    manager.role = 'user';
-    await manager.save();
-
-    const existingYouthProfile = await YouthProfile.exists({ user: manager._id });
-    if (!existingYouthProfile) {
-      await YouthProfile.create({
-        user: manager._id,
-        name: manager.name,
-        email: manager.email,
-        barangay: manager.barangay || 'Masagui',
-        createdBy: req.user._id,
-        updatedBy: req.user._id,
-      });
-    }
+    await callRpc('skids_remove_manager', {
+      p_user_id: manager._id, p_actor: req.user._id,
+    });
 
     await logActivity({
       req,
@@ -198,9 +179,9 @@ router.use(authorize('admin', 'manager'));
 router.get(
   '/youth',
   asyncHandler(async (req, res) => {
-    const youth = await YouthProfile.find()
-      .populate('user', 'avatar name email')
-      .sort({ createdAt: -1 });
+    const youth = await YouthProfile.findAll({
+      order: [['createdAt', 'DESC']],
+    });
     res.json(youth);
   })
 );
@@ -210,6 +191,7 @@ router.post(
   asyncHandler(async (req, res) => {
     const youth = await YouthProfile.create({
       ...req.body,
+      userId: req.body.user || null,
       createdBy: req.user._id,
       updatedBy: req.user._id,
     });
@@ -229,10 +211,9 @@ router.post(
 router.put(
   '/youth/:id',
   asyncHandler(async (req, res) => {
-    const youth = await YouthProfile.findByIdAndUpdate(
+    const youth = await updateById(YouthProfile,
       req.params.id,
-      { ...req.body, updatedBy: req.user._id },
-      { new: true, runValidators: true }
+      { ...req.body, ...(req.body.user !== undefined && { userId: req.body.user }), updatedBy: req.user._id }
     );
 
     if (!youth) {
@@ -255,7 +236,7 @@ router.put(
 router.delete(
   '/youth/:id',
   asyncHandler(async (req, res) => {
-    const youth = await YouthProfile.findByIdAndDelete(req.params.id);
+    const youth = await deleteById(YouthProfile, req.params.id);
 
     if (!youth) {
       res.status(404);
@@ -277,7 +258,7 @@ router.delete(
 router.get(
   '/announcements',
   asyncHandler(async (req, res) => {
-    const announcements = await Announcement.find().sort({ publishedAt: -1 });
+    const announcements = await Announcement.findAll({ order: [['publishedAt', 'DESC']] });
     res.json(announcements);
   })
 );
@@ -307,10 +288,9 @@ router.post(
 router.put(
   '/announcements/:id',
   asyncHandler(async (req, res) => {
-    const announcement = await Announcement.findByIdAndUpdate(
+    const announcement = await updateById(Announcement,
       req.params.id,
-      req.body,
-      { new: true, runValidators: true }
+      req.body
     );
 
     if (!announcement) {
@@ -333,7 +313,7 @@ router.put(
 router.delete(
   '/announcements/:id',
   asyncHandler(async (req, res) => {
-    const announcement = await Announcement.findByIdAndDelete(req.params.id);
+    const announcement = await deleteById(Announcement, req.params.id);
 
     if (!announcement) {
       res.status(404);
@@ -355,7 +335,7 @@ router.delete(
 router.get(
   '/events',
   asyncHandler(async (req, res) => {
-    const events = await Event.find().sort({ date: 1 });
+    const events = await Event.findAll({ order: [['date', 'ASC']] });
     res.json(events);
   })
 );
@@ -388,10 +368,7 @@ router.put(
       assertFutureEventDate(req.body.date);
     }
 
-    const event = await Event.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
-      runValidators: true,
-    });
+    const event = await updateById(Event, req.params.id, req.body);
 
     if (!event) {
       res.status(404);
@@ -413,7 +390,7 @@ router.put(
 router.delete(
   '/events/:id',
   asyncHandler(async (req, res) => {
-    const event = await Event.findByIdAndDelete(req.params.id);
+    const event = await deleteById(Event, req.params.id);
 
     if (!event) {
       res.status(404);
@@ -435,7 +412,7 @@ router.delete(
 router.get(
   '/budget',
   asyncHandler(async (req, res) => {
-    const reports = await BudgetReport.find().sort({ reportDate: -1 });
+    const reports = await BudgetReport.findAll({ order: [['reportDate', 'DESC']] });
     res.json(reports.map(budgetResponse));
   })
 );
@@ -479,10 +456,7 @@ router.put(
       ...(req.body.cloudinary && { cloudinary: req.body.cloudinary }),
     };
 
-    const report = await BudgetReport.findByIdAndUpdate(req.params.id, update, {
-      new: true,
-      runValidators: true,
-    });
+    const report = await updateById(BudgetReport, req.params.id, update);
 
     if (!report) {
       res.status(404);
@@ -504,7 +478,7 @@ router.put(
 router.delete(
   '/budget/:id',
   asyncHandler(async (req, res) => {
-    const report = await BudgetReport.findByIdAndDelete(req.params.id);
+    const report = await deleteById(BudgetReport, req.params.id);
 
     if (!report) {
       res.status(404);
@@ -526,7 +500,7 @@ router.delete(
 router.delete(
   '/messages/:id',
   asyncHandler(async (req, res) => {
-    const message = await Message.findByIdAndDelete(req.params.id);
+    const message = await deleteById(Message, req.params.id);
 
     if (!message) {
       res.status(404);
@@ -550,7 +524,7 @@ router.delete(
 router.get(
   '/documents',
   asyncHandler(async (req, res) => {
-    const documents = await Document.find().sort({ createdAt: -1 });
+    const documents = await Document.findAll({ order: [['createdAt', 'DESC']] });
     res.json(documents.map(documentResponse));
   })
 );
@@ -593,7 +567,7 @@ router.post(
 router.delete(
   '/documents/:id',
   asyncHandler(async (req, res) => {
-    const document = await Document.findByIdAndDelete(req.params.id);
+    const document = await deleteById(Document, req.params.id);
 
     if (!document) {
       res.status(404);
@@ -615,7 +589,7 @@ router.delete(
 router.get(
   '/messages',
   asyncHandler(async (req, res) => {
-    const messages = await Message.find().sort({ createdAt: -1 });
+    const messages = await Message.findAll({ order: [['createdAt', 'DESC']] });
     res.json(messages);
   })
 );
@@ -630,13 +604,11 @@ router.post(
       throw new Error('Message not found');
     }
 
-    message.replies.push({
-      message: req.body.reply,
-      sender: req.user._id,
-      senderName: req.user.name,
+    await callRpc('skids_reply', {
+      p_message_id: message._id, p_reply: String(req.body.reply || '').trim(),
+      p_sender: req.user._id, p_sender_name: req.user.name,
     });
-    message.status = 'read';
-    await message.save();
+    const updatedMessage = await Message.findById(message._id);
 
     await logActivity({
       user: req.user,
@@ -646,17 +618,16 @@ router.post(
       details: message.subject,
     });
 
-    res.json(message);
+    res.json(updatedMessage);
   })
 );
 
 router.put(
   '/messages/:id/read',
   asyncHandler(async (req, res) => {
-    const message = await Message.findByIdAndUpdate(
+    const message = await updateById(Message,
       req.params.id,
-      { status: 'read' },
-      { new: true }
+      { status: 'read' }
     );
 
     if (!message) {
@@ -683,64 +654,19 @@ router.get(
   asyncHandler(async (req, res) => {
     const page = positiveInteger(req.query.page, 1, 100000);
     const limit = positiveInteger(req.query.limit, 25, 100);
-    const query = {};
     const search = String(req.query.search || '').trim();
     const actionType = String(req.query.actionType || '').trim();
     const resourceType = String(req.query.resourceType || '').trim();
 
-    if (search) {
-      const expression = new RegExp(escapeRegExp(search), 'i');
-      query.$or = [
-        { actorName: expression },
-        { action: expression },
-        { details: expression },
-      ];
-    }
-
-    if (actionType) {
-      query.$and = [
-        {
-          $or: [
-            { actionType },
-            {
-              actionType: { $exists: false },
-              action: legacyActionPatterns[actionType] || /^$/,
-            },
-          ],
-        },
-      ];
-    }
-
-    if (resourceType) {
-      query.resourceType = resourceType;
-    }
-
-    if (req.query.dateFrom || req.query.dateTo) {
-      query.createdAt = {};
-
-      if (req.query.dateFrom) {
-        const dateFrom = validDate(req.query.dateFrom);
-        if (dateFrom) query.createdAt.$gte = dateFrom;
-      }
-
-      if (req.query.dateTo) {
-        const dateTo = validDate(req.query.dateTo);
-        if (dateTo) query.createdAt.$lte = dateTo;
-      }
-
-      if (Object.keys(query.createdAt).length === 0) {
-        delete query.createdAt;
-      }
-    }
-
-    const [logs, total, resourceTypes] = await Promise.all([
-      ActivityLog.find(query)
-        .sort({ createdAt: -1 })
-        .skip((page - 1) * limit)
-        .limit(limit),
-      ActivityLog.countDocuments(query),
-      ActivityLog.distinct('resourceType', { resourceType: { $ne: '' } }),
-    ]);
+    const history = await callRpc('skids_history', {
+      p_search: search, p_action_type: actionType, p_resource_type: resourceType,
+      p_date_from: validDate(req.query.dateFrom)?.toISOString() || null,
+      p_date_to: validDate(req.query.dateTo)?.toISOString() || null,
+      p_limit: limit, p_offset: (page - 1) * limit,
+    });
+    const logs = history.logs.map((row) => ActivityLog.hydrate(row));
+    const total = history.total;
+    const resourceTypes = history.resourceTypes;
 
     res.json({
       logs: logs.map((log) => ({
@@ -766,7 +692,7 @@ router.get(
       },
       filters: {
         actionTypes: ['login', 'logout', 'create', 'update', 'delete', 'profile_update'],
-        resourceTypes: resourceTypes.sort(),
+        resourceTypes,
       },
     });
   })
@@ -794,7 +720,7 @@ router.put(
       contact: req.body.contact ?? req.user.profile?.contact,
       address: req.body.address ?? req.user.profile?.address,
     };
-    await req.user.save();
+    req.user = await User.updateById(req.user._id, req.user);
 
     await logActivity({
       req,

@@ -6,7 +6,7 @@ import { bootstrapAdminPassword } from './src/utils/bootstrapAdmin.js';
 const PORT = process.env.PORT || 5000;
 
 const validateEnvironment = () => {
-  const required = ['MONGODB_URI', 'JWT_SECRET'];
+  const required = ['SUPABASE_URL', 'JWT_SECRET'];
 
   if (process.env.NODE_ENV === 'production') {
     required.push(
@@ -33,7 +33,7 @@ const validateEnvironment = () => {
 const startServer = async () => {
   try {
     validateEnvironment();
-    await connectDB(process.env.MONGODB_URI);
+    await connectDB();
     await bootstrapAdminPassword();
 
     app.listen(PORT, () => {

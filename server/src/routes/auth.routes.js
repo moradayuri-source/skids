@@ -1,7 +1,7 @@
 import { OAuth2Client } from 'google-auth-library';
 import express from 'express';
+import { callRpc } from '../config/db.js';
 import User from '../models/User.js';
-import YouthProfile from '../models/YouthProfile.js';
 import { logActivity } from '../utils/activityLogger.js';
 import asyncHandler from '../utils/asyncHandler.js';
 import { requireAuth } from '../middleware/auth.js';
@@ -42,7 +42,7 @@ const buildName = ({ firstName, middleInitial, middleName, lastName, suffix, nam
     .join(' ');
 };
 
-const createYouthProfileForUser = async ({ user, body }) => {
+const buildYouthProfile = ({ user, body }) => {
   const profile = body.youthProfile || body.profile || {};
   const firstName = cleanText(body.firstName || profile.firstName);
   const middleName = cleanText(body.middleName || body.middleInitial || profile.middleName);
@@ -56,8 +56,7 @@ const createYouthProfileForUser = async ({ user, body }) => {
     name: profile.name || body.name || user.name,
   });
 
-  await YouthProfile.create({
-    user: user._id,
+  return {
     name,
     age: optionalNumber(profile.age),
     barangay: cleanText(profile.barangay || body.barangay) || 'Masagui',
@@ -67,9 +66,7 @@ const createYouthProfileForUser = async ({ user, body }) => {
     civilStatus: cleanText(profile.civilStatus),
     voterStatus: cleanText(profile.voterStatus),
     workStatus: cleanText(profile.workStatus),
-    createdBy: user._id,
-    updatedBy: user._id,
-  });
+  };
 };
 
 router.post(
@@ -95,7 +92,7 @@ router.post(
       );
     }
 
-    const existingUser = await User.findOne({ email }).select('+passwordHash');
+    const existingUser = await User.findOne({ where: { email }, includePassword: true });
 
     if (existingUser) {
       res.status(409);
@@ -115,7 +112,7 @@ router.post(
     const passwordHash = await hashPassword(password);
     const profile = req.body.profile || req.body.youthProfile || {};
 
-    const user = await User.create({
+    const accountData = User.prepare({
       email,
       passwordHash,
       authProvider: 'password',
@@ -141,10 +138,10 @@ router.post(
         workStatus: cleanText(profile.workStatus),
       },
     });
-
-    if (role === 'user') {
-      await createYouthProfileForUser({ user, body: req.body });
-    }
+    const user = User.hydrate(await callRpc('skids_register', {
+      p_user: accountData,
+      p_youth: buildYouthProfile({ user: accountData, body: req.body }),
+    }));
 
     await logActivity({
       req,
@@ -175,7 +172,7 @@ router.post(
       throw new Error('Email and password are required');
     }
 
-    const user = await User.findOne({ email }).select('+passwordHash');
+    const user = await User.findOne({ where: { email }, includePassword: true });
 
     if (!user || !(await verifyPassword(password, user.passwordHash))) {
       res.status(401);
@@ -188,7 +185,7 @@ router.post(
     }
 
     user.lastLoginAt = new Date();
-    await user.save();
+    await User.updateById(user._id, { lastLoginAt: user.lastLoginAt });
 
     await logActivity({
       req,
@@ -236,55 +233,13 @@ router.post(
     }
 
     const email = payload.email.toLowerCase();
-    const adminEmails = getAdminEmails();
-    const existingUser = await User.findOne({
-      $or: [{ googleId: payload.sub }, { email }],
-    }).select('+passwordHash');
-
-    const role = adminEmails.has(email)
-      ? 'admin'
-      : existingUser?.role === 'manager'
-        ? 'manager'
-        : 'user';
-
-    const user = await User.findOneAndUpdate(
-      { $or: [{ googleId: payload.sub }, { email }] },
-      {
-        $set: {
-          googleId: payload.sub,
-          email,
-          name: payload.name || email,
-          avatar: existingUser?.avatar || payload.picture || '',
-          role,
-          authProvider: existingUser?.passwordHash ? 'both' : 'google',
-          lastLoginAt: new Date(),
-          isActive: true,
-          status: 'active',
-        },
-        $setOnInsert: {
-          barangay: 'Masagui',
-        },
+    const user = User.hydrate(await callRpc('skids_google_sign_in', {
+      p_identity: {
+        googleId: payload.sub, email, name: payload.name || email,
+        avatar: payload.picture || '',
       },
-      {
-        new: true,
-        upsert: true,
-        runValidators: true,
-      }
-    );
-
-    if (role === 'user') {
-      const existingYouthProfile = await YouthProfile.exists({ user: user._id });
-      if (!existingYouthProfile) {
-        await YouthProfile.create({
-          user: user._id,
-          name: user.name,
-          email: user.email,
-          barangay: user.barangay || 'Masagui',
-          createdBy: user._id,
-          updatedBy: user._id,
-        });
-      }
-    }
+      p_admin: getAdminEmails().has(email),
+    }));
 
     await logActivity({
       req,

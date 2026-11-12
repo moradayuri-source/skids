@@ -1,10 +1,11 @@
 import express from 'express';
+import { callRpc } from '../config/db.js';
+import User from '../models/User.js';
 import Announcement from '../models/Announcement.js';
 import BudgetReport from '../models/BudgetReport.js';
 import Document from '../models/Document.js';
 import Event from '../models/Event.js';
 import Message from '../models/Message.js';
-import YouthProfile from '../models/YouthProfile.js';
 import { logActivity } from '../utils/activityLogger.js';
 import asyncHandler from '../utils/asyncHandler.js';
 import { requireAuth } from '../middleware/auth.js';
@@ -48,9 +49,7 @@ router.use(requireAuth);
 router.get(
   '/announcements',
   asyncHandler(async (req, res) => {
-    const announcements = await Announcement.find({ status: 'Published' }).sort({
-      publishedAt: -1,
-    });
+    const announcements = await Announcement.findAll({ where: { status: 'Published' }, order: [['publishedAt', 'DESC']] });
     res.json(announcements);
   })
 );
@@ -58,7 +57,7 @@ router.get(
 router.get(
   '/events',
   asyncHandler(async (req, res) => {
-    const events = await Event.find({ status: 'Scheduled' }).sort({ date: 1 });
+    const events = await Event.findAll({ where: { status: 'Scheduled' }, order: [['date', 'ASC']] });
     res.json(events);
   })
 );
@@ -66,9 +65,7 @@ router.get(
 router.get(
   '/budget',
   asyncHandler(async (req, res) => {
-    const reports = await BudgetReport.find({ status: { $ne: 'Rejected' } }).sort({
-      reportDate: -1,
-    });
+    const reports = await BudgetReport.findAll({ filters: [['status', 'neq', 'Rejected']], order: [['reportDate', 'DESC']] });
     res.json(reports.map(budgetResponse));
   })
 );
@@ -76,9 +73,7 @@ router.get(
 router.get(
   '/documents',
   asyncHandler(async (req, res) => {
-    const documents = await Document.find({ status: { $ne: 'Archived' } }).sort({
-      createdAt: -1,
-    });
+    const documents = await Document.findAll({ filters: [['status', 'neq', 'Archived']], order: [['createdAt', 'DESC']] });
     res.json(documents.map(documentResponse));
   })
 );
@@ -119,7 +114,7 @@ router.post(
 router.get(
   '/messages',
   asyncHandler(async (req, res) => {
-    const messages = await Message.find({ sender: req.user._id }).sort({ createdAt: -1 });
+    const messages = await Message.findAll({ where: { sender: req.user._id }, order: [['createdAt', 'DESC']] });
     res.json(messages);
   })
 );
@@ -185,11 +180,10 @@ router.put(
           ? ''
           : req.body.assemblyAttendance ?? req.user.profile?.assemblyAttendance,
     };
-    await req.user.save();
-
-    await YouthProfile.findOneAndUpdate(
-      { user: req.user._id },
-      {
+    req.user = User.hydrate(await callRpc('skids_update_profile', {
+      p_user_id: req.user._id,
+      p_changes: User.prepare(req.user),
+      p_youth: {
         name: req.user.name,
         email: req.user.email,
         age: req.user.profile?.age,
@@ -201,8 +195,7 @@ router.put(
         workStatus: req.user.profile?.workStatus,
         updatedBy: req.user._id,
       },
-      { upsert: true, runValidators: true }
-    );
+    }));
 
     await logActivity({
       req,
